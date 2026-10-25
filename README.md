@@ -9,7 +9,7 @@
 - **中文**：在 Windows 用自己的輸入法打好，複製後在 Firefox 按 `Ctrl+V` 貼上
 - **Web 終端機**：在 Firefox 開 `http://localhost:2200`（bash）或 `http://localhost:2210`（SSH），只能從桌面內開啟
 - **Session 分享**（`:3.4-share`）：登入後顯示操作 PIN 與唯讀 PIN，別人輸入 PIN 即可加入你的桌面
-- **安全**：密碼於啟動時設定、不寫進映像檔；每個 container 自己產生 TLS 憑證；xrdp 降權執行；斷線的桌面 2 分鐘後自動回收
+- **在叢集內驗證 Web 應用**：Firefox 就在 Kubernetes 叢集裡，直接開 `http://<service>.<namespace>` 即可瀏覽叢集內的 Web 服務，不需要安裝 MetalLB 或 kube-vip 取得外部 IP
 
 ## 快速開始
 
