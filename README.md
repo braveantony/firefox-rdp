@@ -24,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/instal
 
 - 要多個帳號或改密碼，請改用下方的 [進階：多個帳號（Kustomize）](#進階多個帳號kustomize)。
 - 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。
-- 讓區網的 Windows 直接用主機 IP 連線（不用記 NodePort），見 [build-image-v3.4.md](build-image-v3.4.md) 附錄 A-4。
+- 讓區網的 Windows 直接用主機 IP 連線（不用記 NodePort），見 [build-image-v3.4.md](docs/build-image-v3.4.md) 附錄 A-4。
 - 移除：`kubectl delete namespace web-workspace`
 
 ### 單機（podman 或 docker）
@@ -91,8 +91,8 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 ```bash
 git clone https://github.com/braveantony/rdp-firefox.git
 cd rdp-firefox
-vi deploy/example/users.txt
-kubectl apply -k deploy/example
+vi manifests/multi-user/users.txt
+kubectl apply -k manifests/multi-user
 kubectl -n web-workspace rollout status deploy/firefox-rdp
 ```
 
@@ -104,10 +104,10 @@ bob:Bob-pw
 ```
 
 - 帳號規則：小寫英文字母或 `_` 開頭，可用小寫英數字、`_`、`-`，最長 32 字元，不可為 `root`、`xrdp`、`webterm`；密碼不可空白，可以包含冒號。不符規則時 pod 會啟動失敗，原因寫在 `kubectl logs` 裡。
-- 修改 `users.txt` 後再 `kubectl apply -k deploy/example` 即可：Secret 名稱帶內容雜湊（`firefox-rdp-users-<雜湊>`），名單有變就會自動重建 pod。
+- 修改 `users.txt` 後再 `kubectl apply -k manifests/multi-user` 即可：Secret 名稱帶內容雜湊（`firefox-rdp-users-<雜湊>`），名單有變就會自動重建 pod。
 - 每個帳號各有自己的桌面與家目錄；設定多個帳號時，`localhost:2200` 會先要求登入。
 - 已用快速開始安裝過也沒關係，直接 apply 即會改用新的名單；之後不要再執行 `install.sh`，否則會換回只有 bigred/bigred。
-- 要換映像檔（例如無法上網的叢集改用私有 registry，或改用不含分享功能的 `:3.2`），在 `deploy/example/kustomization.yaml` 的 `images:` 設定 `newName`／`newTag`。
+- 要換映像檔（例如無法上網的叢集改用私有 registry，或改用不含分享功能的 `:3.2`），在 `manifests/multi-user/kustomization.yaml` 的 `images:` 設定 `newName`／`newTag`。
 - `users.txt` 含明文密碼，請勿提交到公開的 repo；可改用 SOPS、Sealed Secrets 等工具管理。
 - 單機使用時，把帳號檔案掛載進去即可：`-v ./users.txt:/etc/firefox-rdp/users:ro,Z`（取代 `RDP_USER`／`RDP_PASSWORD`）。
 
@@ -124,13 +124,13 @@ bob:Bob-pw
 | 映像檔大小 | 約 790 MB | 約 1.04 GB | 約 1.04 GB |
 | 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share) | branch [`release/3.5-share`](../../tree/release/3.5-share)（= `main`） |
 
-Dockerfile 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `-share` 版；`SESSION_SHARE=0`（預設）建出不含分享功能的版本，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
+`images/rdp-firefox/Dockerfile` 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `-share` 版；`SESSION_SHARE=0`（預設）建出不含分享功能的版本，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
 
 ## 文件
 
-- [user-guide.md](user-guide.md)：使用手冊（連線登入、Firefox 與中文、終端機、多人使用、分享與加入桌面、常見問題）
-- [build-image-v3.4.md](build-image-v3.4.md)：從零建置 `:3.4` 與 `:3.4-share`，並部署到 Kubernetes（tk8s）的完整步驟
-- [build-image.md](build-image.md)：v3.2（只有多人獨立 session）的建置步驟
+- [user-guide.md](docs/user-guide.md)：使用手冊（連線登入、Firefox 與中文、終端機、多人使用、分享與加入桌面、常見問題）
+- [build-image-v3.4.md](docs/build-image-v3.4.md)：從零建置 `:3.4` 與 `:3.4-share`，並部署到 Kubernetes（tk8s）的完整步驟
+- [build-image.md](docs/build-image.md)：v3.2（只有多人獨立 session）的建置步驟
 
 ## 環境變數
 
@@ -146,13 +146,15 @@ Dockerfile 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SES
 
 | 路徑 | 說明 |
 | --- | --- |
-| `Dockerfile` | 映像檔定義（基底 `alpine:3.22`；`SESSION_SHARE=1` 時加裝 session 分享） |
-| `rootfs/` | 兩個 tag 都會複製進映像檔 `/` 的設定檔與腳本 |
-| `rootfs-share/` | 只有 `-share` 版會套用的分享功能檔案 |
+| `VERSION` | 目前版本 |
+| `images/rdp-firefox/Dockerfile` | 映像檔定義（基底 `alpine:3.22`；`SESSION_SHARE=1` 時加裝 session 分享） |
+| `images/rdp-firefox/rootfs/` | 所有版本都會複製進映像檔 `/` 的設定檔與腳本 |
+| `images/rdp-firefox/rootfs-share/` | 只有 `-share` 版會套用的分享功能檔案 |
 | `install.sh` | 快速開始的 `curl \| bash` 安裝腳本（帳號 bigred/bigred） |
-| `deploy/base/` | Kustomize base：Namespace、Deployment、NodePort Service（30389） |
-| `deploy/example/` | Kustomize overlay 範例：`users.txt` 帳號清單產生 Secret |
-| `docs/images/` | README 截圖 |
+| `manifests/base/` | Kustomize base：Namespace、Deployment、NodePort Service（30389） |
+| `manifests/multi-user/` | 多帳號 overlay：`users.txt` 帳號清單產生 Secret |
+| `docs/` | 使用手冊、建置文件與 README 截圖（`docs/images/`） |
+| `test/e2e/` | 在臨時 kind 叢集上的端到端驗證腳本 |
 
 ## 授權
 

@@ -2,7 +2,7 @@
 
 本文件從零做出 `localhost/alpine-firefox-rdp:3.2`。**由上到下依序複製每個指令區塊貼到終端機執行**，就能得到 v3.2 映像檔。每個區塊開頭都會 `cd ~/firefox-rdp`，中途換終端機也能接著貼。
 
-> 包含 session 分享功能的完整版本（v3.4，`:3.4` 與 `:3.4-share` 兩個 tag）請見 [build-image-v3.4.md](https://github.com/braveantony/rdp-firefox/blob/main/build-image-v3.4.md)。
+> 包含 session 分享功能的完整版本（v3.4，`:3.4` 與 `:3.4-share` 兩個 tag）請見 [build-image-v3.4.md](https://github.com/braveantony/rdp-firefox/blob/main/docs/build-image-v3.4.md)。
 
 ## 這個映像檔做什麼
 

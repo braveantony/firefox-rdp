@@ -1,5 +1,5 @@
-# Example overlay: edit users.txt, then
-#   kubectl apply -k deploy/example
+# Multi-user overlay: edit users.txt, then
+#   kubectl apply -k manifests/multi-user
 # The Secret name gets a content hash, so changing users.txt rolls the pod.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

@@ -4,12 +4,12 @@
 #   curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh | bash
 #
 # For several accounts or your own passwords, use the kustomize overlay in
-# deploy/example instead (see README).
+# manifests/multi-user instead (see README).
 #
 # Optional, mainly for testing:
 #   RDP_FIREFOX_REF    branch or tag of github.com/braveantony/rdp-firefox to deploy (default: main)
-#   RDP_FIREFOX_IMAGE  image to run instead of the one in deploy/base
-#   RDP_FIREFOX_RAW    where to fetch deploy/base from (default: raw.githubusercontent.com)
+#   RDP_FIREFOX_IMAGE  image to run instead of the one in manifests/base
+#   RDP_FIREFOX_RAW    where to fetch manifests/base from (default: raw.githubusercontent.com)
 #
 # Uninstall: kubectl delete namespace web-workspace
 set -euo pipefail
@@ -28,11 +28,11 @@ main() {
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
 
-  say "Fetching deploy/base ($ref)"
+  say "Fetching manifests/base ($ref)"
   mkdir -p "$tmp/base"
   local f
   for f in kustomization.yaml namespace.yaml deployment.yaml service.yaml; do
-    curl -fsSL "$raw/deploy/base/$f" -o "$tmp/base/$f" || die "cannot download deploy/base/$f from $raw"
+    curl -fsSL "$raw/manifests/base/$f" -o "$tmp/base/$f" || die "cannot download manifests/base/$f from $raw"
   done
 
   echo "bigred:bigred" > "$tmp/users.txt"
@@ -82,7 +82,7 @@ main() {
   echo "  Connect with Windows Remote Desktop (mstsc) to any node:"
   for f in $ips; do echo "    $f:$port"; done
   echo "  On the xrdp login screen keep Session = Xorg and log in as bigred / bigred."
-  echo "  More accounts or other passwords: see deploy/example (kustomize) in the repo."
+  echo "  More accounts or other passwords: see manifests/multi-user (kustomize) in the repo."
   echo "  Uninstall: kubectl delete namespace $ns"
 }
 

@@ -1,6 +1,6 @@
 # Firefox 遠端桌面使用手冊
 
-適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.5-share`（`:3.4-share` 除了只有單一帳號外操作相同）。安裝方式請見 [README](README.md#快速開始)。
+適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.5-share`（`:3.4-share` 除了只有單一帳號外操作相同）。安裝方式請見 [README](../README.md#快速開始)。
 
 用 Windows 內建的「遠端桌面連線」登入後，畫面上只有一個全螢幕的 Firefox。多人可以同時連線，各自有獨立的桌面；需要時也可以把自己的桌面分享給別人看或一起操作。
 
