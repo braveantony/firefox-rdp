@@ -2,8 +2,6 @@
 
 用 Windows 內建的「遠端桌面連線」（RDP）登入，畫面上就是一個全螢幕的 Firefox。映像檔以 Alpine Linux 為基底，設計給 Kubernetes 上多人同時使用：每個人都有自己獨立的桌面，需要時也能把自己的桌面分享給別人看或一起操作。
 
-![登入後的 Firefox](docs/images/03-firefox.png)
-
 ## 簡述
 
 - **用戶端免安裝**：Windows 內建的遠端桌面連線即可，不需要 VNC 或任何外掛
@@ -53,6 +51,8 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 ### 2. 使用 Firefox
 
 登入後畫面上只有全螢幕的 Firefox。關掉它會在 1 秒內自動重開；解析度跟著遠端桌面視窗大小。中文請在 Windows 打好後複製，再到 Firefox 按 `Ctrl+V`。下載檔案時會詢問儲存位置。
+
+![全螢幕的 Firefox](docs/images/03-firefox.png)
 
 > 每條連線都是獨立的新桌面：斷線後無法接回，原本的分頁與下載的檔案會在 2 分鐘後清除。
 
