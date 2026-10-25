@@ -1,4 +1,4 @@
-# firefox-rdp
+# rdp-firefox
 
 Alpine Linux 容器：用 Windows「遠端桌面連線」（RDP）登入後，畫面上只有一個全螢幕的 Firefox。設計給 Kubernetes 上多人同時使用。
 
@@ -15,10 +15,10 @@ Alpine Linux 容器：用 Windows「遠端桌面連線」（RDP）登入後，�
 ## 映像檔
 
 ```bash
-podman pull ghcr.io/braveantony/firefox-rdp:3.2
+podman pull ghcr.io/braveantony/rdp-firefox:3.2
 podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
   -e RDP_USER=bigred -e RDP_PASSWORD=bigred \
-  ghcr.io/braveantony/firefox-rdp:3.2
+  ghcr.io/braveantony/rdp-firefox:3.2
 ```
 
 用遠端桌面連線到 `<主機 IP>:13389`，在 xrdp 登入畫面 Session 保持 `Xorg`，輸入帳密登入。
@@ -34,3 +34,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 | `Dockerfile` | 映像檔定義（基底 `alpine:3.22`） |
 | `rootfs/` | 複製進映像檔 `/` 的設定檔與腳本 |
 | `k8s-firefox-rdp.yaml` | Kubernetes Deployment 與 NodePort Service（30389） |
+
+## 授權
+
+[MIT License](LICENSE)
