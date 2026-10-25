@@ -1,0 +1,3 @@
+#!/bin/bash
+# 用法：myssh <user@host 或 ~/.ssh/config 中的 Host 名稱>
+exec ssh -o StrictHostKeyChecking=accept-new "$@"

@@ -1,0 +1,89 @@
+# Create the login password first (not stored in this file):
+#   kubectl -n web-workspace create secret generic firefox-rdp-auth --from-literal=password='<密碼>'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefox-rdp
+  namespace: web-workspace
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # all RDP sessions live inside this one pod
+  selector:
+    matchLabels:
+      app: firefox-rdp
+  template:
+    metadata:
+      labels:
+        app: firefox-rdp
+    spec:
+      affinity:
+        nodeAffinity:         # tk8s 的 control-plane 沒有 taint，排除它
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
+      containers:
+      - name: desktop
+        image: localhost/alpine-firefox-rdp:3.2
+        imagePullPolicy: IfNotPresent
+        # Runs as root: xrdp-sesman needs PAM and setuid to the login user (RDP_USER).
+        # Xorg, openbox and Firefox run as RDP_USER; the xrdp listener drops to user xrdp.
+        securityContext:
+          allowPrivilegeEscalation: false
+        env:
+        - name: RDP_USER
+          value: "bigred"
+        - name: MAX_SESSIONS        # 同時連線上限；每個 session 約 0.5 CPU、0.5–1 GiB
+          value: "4"
+        - name: SSH_TARGET          # 2210 終端機的 myssh 目標
+          value: "tkadm.taroko"
+        - name: RDP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: firefox-rdp-auth
+              key: password
+        ports:
+        - name: rdp
+          containerPort: 3389
+        readinessProbe:
+          tcpSocket:
+            port: rdp
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: rdp
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        resources:
+          requests:           # 依 MAX_SESSIONS=4 估算
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "4"
+            memory: "4Gi"
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+      volumes:
+      - name: dshm             # 容器預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: firefox-rdp
+  namespace: web-workspace
+spec:
+  type: NodePort
+  selector:
+    app: firefox-rdp
+  ports:
+  - name: rdp
+    port: 3389
+    targetPort: rdp
+    nodePort: 30389
