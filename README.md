@@ -14,54 +14,18 @@
 
 ## 快速開始
 
-### Kubernetes：一行安裝
+### Kubernetes
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh | bash
 ```
 
-腳本用目前的 kubeconfig 部署到 namespace `web-workspace`，完成後印出連線位址（`<節點 IP>:30389`）。沒有指定帳號時會建立 `bigred` 並產生隨機密碼，密碼只在結束時印出一次。
+腳本用目前的 kubeconfig 部署到 namespace `web-workspace`，完成後印出連線位址。用遠端桌面連線到 `<節點 IP>:30389`，帳號 `bigred`、密碼 `bigred`。
 
-指定帳號（一個或多個，`帳號:密碼` 以空白隔開）：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh \
-  | RDP_USERS='alice:Alice-pw bob:Bob-pw' bash
-```
-
-帳號較多時寫在檔案裡，一行一個 `帳號:密碼`（可用 `#` 註解）：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh \
-  | RDP_USERS_FILE=./users.txt bash
-```
-
-| 安裝變數 | 說明 |
-| --- | --- |
-| `RDP_USERS` | 帳號清單 `帳號:密碼`，以空白或換行隔開 |
-| `RDP_USERS_FILE` | 帳號檔案路徑，一行一個 `帳號:密碼` |
-| `RDP_FIREFOX_REF` | 要部署的 branch 或 tag，預設 `main` |
-| `RDP_FIREFOX_IMAGE` | 改用其他映像檔，例如 `ghcr.io/braveantony/rdp-firefox:3.2` 或私有 registry 的副本 |
-
-- 帳號規則：小寫英文字母或 `_` 開頭，可用小寫英數字、`_`、`-`，最長 32 字元，不可為 `root`、`xrdp`、`webterm`；密碼不可空白，可以包含冒號。不符規則時腳本會在部署前停止。
-- 換一份帳號清單重新執行即可：Secret 名稱帶內容雜湊，名單有變才會重建 pod，舊的 Secret 會被刪除。
-- 移除：`kubectl delete namespace web-workspace`
-- 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。無法上網的叢集，請在主機上 `podman pull` 後匯入各節點，方法見 [build-image-v3.4.md](build-image-v3.4.md) 附錄 A-1，再以 `RDP_FIREFOX_IMAGE` 指定。
+- 要多個帳號或改密碼，請改用下方的 [進階：多個帳號（Kustomize）](#進階多個帳號kustomize)。
+- 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。
 - 讓區網的 Windows 直接用主機 IP 連線（不用記 NodePort），見 [build-image-v3.4.md](build-image-v3.4.md) 附錄 A-4。
-
-### Kubernetes：用 Kustomize 自行管理
-
-想把設定放進自己的 Git（GitOps），直接使用 repo 裡的 Kustomize 設定：
-
-```bash
-git clone https://github.com/braveantony/rdp-firefox.git && cd rdp-firefox
-vi deploy/example/users.txt        # 一行一個 帳號:密碼
-kubectl apply -k deploy/example
-```
-
-- `deploy/base/`：Namespace、Deployment、NodePort Service（30389），不含帳號。
-- `deploy/example/`：overlay 範例，以 `secretGenerator` 把 `users.txt` 產生成 Secret `firefox-rdp-users-<雜湊>`（key `users`），掛載到 container 的 `/etc/firefox-rdp/users`。可複製成自己的 overlay，在 `images:` 改映像檔或 tag。
-- `users.txt` 含明文密碼，請勿提交到公開的 repo；可改用 SOPS、Sealed Secrets 等工具管理。
+- 移除：`kubectl delete namespace web-workspace`
 
 ### 單機（podman 或 docker）
 
@@ -71,7 +35,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
   ghcr.io/braveantony/rdp-firefox:3.5-share
 ```
 
-用遠端桌面連線到 `<主機 IP>:13389`。多個帳號時改為掛載帳號檔案：把 `-e RDP_USER=... -e RDP_PASSWORD=...` 換成 `-v ./users.txt:/etc/firefox-rdp/users:ro,Z`。
+用遠端桌面連線到 `<主機 IP>:13389`，帳號密碼同為 `bigred`。
 
 ## 怎麼用
 
@@ -120,6 +84,33 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 > 不要在 username 填 `join10\bigred` 之類的名稱：Session 仍是 `Xorg` 時會被當成帳號而登入失敗。
 
+## 進階：多個帳號（Kustomize）
+
+帳號清單寫在 `users.txt`，由 Kustomize 的 `secretGenerator` 產生 Secret，掛載到 container 的 `/etc/firefox-rdp/users`。
+
+```bash
+git clone https://github.com/braveantony/rdp-firefox.git
+cd rdp-firefox
+vi deploy/example/users.txt
+kubectl apply -k deploy/example
+kubectl -n web-workspace rollout status deploy/firefox-rdp
+```
+
+`users.txt` 一行一個 `帳號:密碼`，`#` 開頭為註解：
+
+```text
+alice:Alice-pw
+bob:Bob-pw
+```
+
+- 帳號規則：小寫英文字母或 `_` 開頭，可用小寫英數字、`_`、`-`，最長 32 字元，不可為 `root`、`xrdp`、`webterm`；密碼不可空白，可以包含冒號。不符規則時 pod 會啟動失敗，原因寫在 `kubectl logs` 裡。
+- 修改 `users.txt` 後再 `kubectl apply -k deploy/example` 即可：Secret 名稱帶內容雜湊（`firefox-rdp-users-<雜湊>`），名單有變就會自動重建 pod。
+- 每個帳號各有自己的桌面與家目錄；設定多個帳號時，`localhost:2200` 會先要求登入。
+- 已用快速開始安裝過也沒關係，直接 apply 即會改用新的名單；之後不要再執行 `install.sh`，否則會換回只有 bigred/bigred。
+- 要換映像檔（例如無法上網的叢集改用私有 registry，或改用不含分享功能的 `:3.2`），在 `deploy/example/kustomization.yaml` 的 `images:` 設定 `newName`／`newTag`。
+- `users.txt` 含明文密碼，請勿提交到公開的 repo；可改用 SOPS、Sealed Secrets 等工具管理。
+- 單機使用時，把帳號檔案掛載進去即可：`-v ./users.txt:/etc/firefox-rdp/users:ro,Z`（取代 `RDP_USER`／`RDP_PASSWORD`）。
+
 ## 版本比較
 
 | | v3.2 | v3.4-share | v3.5-share |
@@ -158,7 +149,7 @@ Dockerfile 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SES
 | `Dockerfile` | 映像檔定義（基底 `alpine:3.22`；`SESSION_SHARE=1` 時加裝 session 分享） |
 | `rootfs/` | 兩個 tag 都會複製進映像檔 `/` 的設定檔與腳本 |
 | `rootfs-share/` | 只有 `-share` 版會套用的分享功能檔案 |
-| `install.sh` | `curl \| bash` 安裝腳本 |
+| `install.sh` | 快速開始的 `curl \| bash` 安裝腳本（帳號 bigred/bigred） |
 | `deploy/base/` | Kustomize base：Namespace、Deployment、NodePort Service（30389） |
 | `deploy/example/` | Kustomize overlay 範例：`users.txt` 帳號清單產生 Secret |
 | `docs/images/` | README 截圖 |
