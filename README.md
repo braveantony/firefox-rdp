@@ -5,38 +5,73 @@
 ## 簡述
 
 - **零安裝、即連即用**：Windows 內建遠端桌面一鍵連線，免裝任何用戶端或外掛，登入即是全螢幕 Firefox
-- **多人並行、彼此隔離**：同一帳號可多人同時登入，每條連線各自擁有專屬的桌面、瀏覽器、下載目錄與終端機，互不干擾
+- **多人並行、彼此隔離**：多個帳號、甚至同一帳號都能多人同時登入，每條連線各自擁有專屬的桌面、瀏覽器、下載目錄與終端機，互不干擾
+- **一行指令完成部署**：`curl | bash` 即裝即用；帳號清單收進 Secret，以 Kustomize 宣告式管理，改名單就自動滾動更新
 - **中文輸入無縫接軌**：沿用 Windows 本機輸入法，透過剪貼簿直接貼入 Firefox
 - **瀏覽器即終端機**：在 Firefox 開啟 `localhost:2200`（bash）或 `localhost:2210`（SSH），維運操作一站完成，且僅限桌面內存取
-- **即時協作、權限分明**（`:3.4-share`）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
+- **即時協作、權限分明**（`-share` 版）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
 - **叢集內的 Web 驗證站**：Firefox 身處 Kubernetes 叢集之中，以 `http://<service>.<namespace>` 即可驗證叢集內的 Web 應用，免裝 MetalLB 或 kube-vip，也無需對外暴露服務
 
 ## 快速開始
 
-### Kubernetes
+### Kubernetes：一行安裝
 
 ```bash
-kubectl create namespace web-workspace
-kubectl -n web-workspace create secret generic firefox-rdp-auth --from-literal=password='bigred'
-kubectl apply -f https://raw.githubusercontent.com/braveantony/rdp-firefox/main/k8s-firefox-rdp.yaml
-kubectl -n web-workspace rollout status deploy/firefox-rdp
+curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh | bash
 ```
 
-用遠端桌面連線到 `<節點 IP>:30389`，帳號 `bigred`、密碼為上面 Secret 設定的值。
+腳本用目前的 kubeconfig 部署到 namespace `web-workspace`，完成後印出連線位址（`<節點 IP>:30389`）。沒有指定帳號時會建立 `bigred` 並產生隨機密碼，密碼只在結束時印出一次。
 
-- 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。無法上網的叢集，請在主機上 `podman pull` 後匯入各節點，方法見 [build-image-v3.4.md](build-image-v3.4.md) 附錄 A-1。
-- 不需要分享功能時，把 YAML 的 `image:` 改成 `ghcr.io/braveantony/rdp-firefox:3.2`。
+指定帳號（一個或多個，`帳號:密碼` 以空白隔開）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh \
+  | RDP_USERS='alice:Alice-pw bob:Bob-pw' bash
+```
+
+帳號較多時寫在檔案裡，一行一個 `帳號:密碼`（可用 `#` 註解）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh \
+  | RDP_USERS_FILE=./users.txt bash
+```
+
+| 安裝變數 | 說明 |
+| --- | --- |
+| `RDP_USERS` | 帳號清單 `帳號:密碼`，以空白或換行隔開 |
+| `RDP_USERS_FILE` | 帳號檔案路徑，一行一個 `帳號:密碼` |
+| `RDP_FIREFOX_REF` | 要部署的 branch 或 tag，預設 `main` |
+| `RDP_FIREFOX_IMAGE` | 改用其他映像檔，例如 `ghcr.io/braveantony/rdp-firefox:3.2` 或私有 registry 的副本 |
+
+- 帳號規則：小寫英文字母或 `_` 開頭，可用小寫英數字、`_`、`-`，最長 32 字元，不可為 `root`、`xrdp`、`webterm`；密碼不可空白，可以包含冒號。不符規則時腳本會在部署前停止。
+- 換一份帳號清單重新執行即可：Secret 名稱帶內容雜湊，名單有變才會重建 pod，舊的 Secret 會被刪除。
+- 移除：`kubectl delete namespace web-workspace`
+- 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。無法上網的叢集，請在主機上 `podman pull` 後匯入各節點，方法見 [build-image-v3.4.md](build-image-v3.4.md) 附錄 A-1，再以 `RDP_FIREFOX_IMAGE` 指定。
 - 讓區網的 Windows 直接用主機 IP 連線（不用記 NodePort），見 [build-image-v3.4.md](build-image-v3.4.md) 附錄 A-4。
+
+### Kubernetes：用 Kustomize 自行管理
+
+想把設定放進自己的 Git（GitOps），直接使用 repo 裡的 Kustomize 設定：
+
+```bash
+git clone https://github.com/braveantony/rdp-firefox.git && cd rdp-firefox
+vi deploy/example/users.txt        # 一行一個 帳號:密碼
+kubectl apply -k deploy/example
+```
+
+- `deploy/base/`：Namespace、Deployment、NodePort Service（30389），不含帳號。
+- `deploy/example/`：overlay 範例，以 `secretGenerator` 把 `users.txt` 產生成 Secret `firefox-rdp-users-<雜湊>`（key `users`），掛載到 container 的 `/etc/firefox-rdp/users`。可複製成自己的 overlay，在 `images:` 改映像檔或 tag。
+- `users.txt` 含明文密碼，請勿提交到公開的 repo；可改用 SOPS、Sealed Secrets 等工具管理。
 
 ### 單機（podman 或 docker）
 
 ```bash
 podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
   -e RDP_USER=bigred -e RDP_PASSWORD=bigred \
-  ghcr.io/braveantony/rdp-firefox:3.4-share
+  ghcr.io/braveantony/rdp-firefox:3.5-share
 ```
 
-用遠端桌面連線到 `<主機 IP>:13389`。
+用遠端桌面連線到 `<主機 IP>:13389`。多個帳號時改為掛載帳號檔案：把 `-e RDP_USER=... -e RDP_PASSWORD=...` 換成 `-v ./users.txt:/etc/firefox-rdp/users:ro,Z`。
 
 ## 怎麼用
 
@@ -56,11 +91,13 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 ### 3. Web 終端機
 
-在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機（身分 `bigred`），`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`）。每個分頁都是獨立的終端機，關掉即清除。
+在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`）。每個分頁都是獨立的終端機，關掉即清除。
+
+只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免以別人的身分操作。
 
 ![localhost:2200 終端機](docs/images/04-terminal.png)
 
-### 4. 分享你的桌面（`:3.4-share`）
+### 4. 分享你的桌面（`-share` 版）
 
 登入約 2 秒後，畫面中央會出現這個桌面的**編號**、**操作 PIN**（可以操作）與**唯讀 PIN**（只能看）。把要給的 PIN 告訴對方即可。視窗關掉後按 `Ctrl+Alt+S` 可再叫出；**開始分享前請先關掉這個視窗**，以免加入者看到操作 PIN。
 
@@ -77,7 +114,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
    ![填入 PIN](docs/images/06-join-pin.png)
 
-4. 加入後就看到對方的畫面：用唯讀 PIN 時所有輸入都無效，用操作 PIN 時可以一起操作（滑鼠鍵盤與對方共用）。
+4. 加入後就看到對方的畫面：用唯讀 PIN 時所有輸入都無效，用操作 PIN 時可以一起操作（滑鼠鍵盤與對方共用）。分享不限帳號：任何人只要拿到 PIN 都能加入。
 
    ![加入後看到對方的畫面](docs/images/07-joined-view.png)
 
@@ -85,16 +122,18 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 ## 版本比較
 
-| | v3.2 | v3.4-share |
-| --- | --- | --- |
-| 映像檔 | `ghcr.io/braveantony/rdp-firefox:3.2` | `ghcr.io/braveantony/rdp-firefox:3.4-share` |
-| 多人同帳號同時登入、各自獨立桌面 | ✅ | ✅ |
-| localhost:2200／2210 Web 終端機 | ✅ | ✅ |
-| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ |
-| 映像檔大小 | 約 790 MB | 約 1.04 GB |
-| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share)（= `main`） |
+| | v3.2 | v3.4-share | v3.5-share |
+| --- | --- | --- | --- |
+| 映像檔 | `ghcr.io/braveantony/rdp-firefox:3.2` | `ghcr.io/braveantony/rdp-firefox:3.4-share` | `ghcr.io/braveantony/rdp-firefox:3.5-share` |
+| 同一帳號多人同時登入、各自獨立桌面 | ✅ | ✅ | ✅ |
+| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ |
+| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ | ✅ |
+| 多個帳號（Secret 帳號檔案） | — | — | ✅ |
+| `curl \| bash` 安裝、Kustomize 部署 | — | — | ✅ |
+| 映像檔大小 | 約 790 MB | 約 1.04 GB | 約 1.04 GB |
+| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share) | branch [`release/3.5-share`](../../tree/release/3.5-share)（= `main`） |
 
-本 branch 的 Dockerfile 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `:3.4-share`；`SESSION_SHARE=0`（預設）建出不含分享功能的 `:3.4`，功能與 v3.2 相同，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
+Dockerfile 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `-share` 版；`SESSION_SHARE=0`（預設）建出不含分享功能的版本，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
 
 ## 文件
 
@@ -106,8 +145,9 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 | 變數 | 預設值 | 說明 |
 | --- | --- | --- |
-| `RDP_PASSWORD` | （必填） | 登入密碼；Kubernetes 上由 Secret `firefox-rdp-auth` 提供 |
-| `RDP_USER` | `bigred` | 登入帳號（UID 1000），不可為 `root` 或 `xrdp` |
+| `USERS_FILE` | `/etc/firefox-rdp/users` | 帳號檔案，一行一個 `帳號:密碼`；Kubernetes 上由 Secret `firefox-rdp-users-*` 掛載。檔案存在時忽略下面兩個變數 |
+| `RDP_USER` | `bigred` | 沒有帳號檔案時的登入帳號（UID 1000） |
+| `RDP_PASSWORD` | — | 沒有帳號檔案時的登入密碼（此時必填） |
 | `MAX_SESSIONS` | `4` | 同時桌面數上限；加入別人桌面的連線不佔名額 |
 | `SSH_TARGET` | `tkadm.taroko` | `localhost:2210` 終端機的 SSH 目標 |
 
@@ -117,8 +157,10 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 | --- | --- |
 | `Dockerfile` | 映像檔定義（基底 `alpine:3.22`；`SESSION_SHARE=1` 時加裝 session 分享） |
 | `rootfs/` | 兩個 tag 都會複製進映像檔 `/` 的設定檔與腳本 |
-| `rootfs-share/` | 只有 `:3.4-share` 會套用的分享功能檔案 |
-| `k8s-firefox-rdp.yaml` | Kubernetes Deployment 與 NodePort Service（30389），預設使用 ghcr 映像檔 |
+| `rootfs-share/` | 只有 `-share` 版會套用的分享功能檔案 |
+| `install.sh` | `curl \| bash` 安裝腳本 |
+| `deploy/base/` | Kustomize base：Namespace、Deployment、NodePort Service（30389） |
+| `deploy/example/` | Kustomize overlay 範例：`users.txt` 帳號清單產生 Secret |
 | `docs/images/` | README 截圖 |
 
 ## 授權

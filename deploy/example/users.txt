@@ -1,0 +1,5 @@
+# 一行一個帳號：帳號:密碼
+# 帳號：小寫英文字母開頭，可用小寫英數字、_、-，最長 32 字元；不可用 root、xrdp、webterm
+# 密碼不可空白，可以包含冒號
+alice:ChangeMe-alice
+bob:ChangeMe-bob

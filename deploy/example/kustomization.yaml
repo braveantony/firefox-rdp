@@ -1,0 +1,16 @@
+# Example overlay: edit users.txt, then
+#   kubectl apply -k deploy/example
+# The Secret name gets a content hash, so changing users.txt rolls the pod.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: web-workspace
+resources:
+- ../base
+secretGenerator:
+- name: firefox-rdp-users
+  files:
+  - users=users.txt
+# Pin or change the image tag here if needed:
+# images:
+# - name: ghcr.io/braveantony/rdp-firefox
+#   newTag: 3.5-share

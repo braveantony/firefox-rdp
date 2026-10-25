@@ -603,7 +603,7 @@ kubectl -n web-workspace create secret generic firefox-rdp-auth \
 
 ### A-3 部署 YAML
 
-這份 YAML 使用你在 Step 6 自己建置、並以附錄 A-1 匯入節點的 `localhost/alpine-firefox-rdp:3.4-share`；不需要分享 session 時，把 `image:` 改成 `localhost/alpine-firefox-rdp:3.4`。repo 裡的 `k8s-firefox-rdp.yaml` 則預設使用已發布的 `ghcr.io/braveantony/rdp-firefox:3.4-share`（兩者只差 `image:` 這一行），不需要自行建置時直接用 repo 的檔案即可。
+這份 YAML 使用你在 Step 6 自己建置、並以附錄 A-1 匯入節點的 `localhost/alpine-firefox-rdp:3.4-share`；不需要分享 session 時，把 `image:` 改成 `localhost/alpine-firefox-rdp:3.4`。release/3.4-share branch 裡的 `k8s-firefox-rdp.yaml` 則預設使用已發布的 `ghcr.io/braveantony/rdp-firefox:3.4-share`（兩者只差 `image:` 這一行），不需要自行建置時直接用 repo 的檔案即可。
 
 ```bash
 cd ~/firefox-rdp
@@ -768,4 +768,4 @@ Windows「遠端桌面連線」連到主機後，會出現 xrdp 登入畫面（S
 | 第 5 個使用者登不進去 | 達到 `MAX_SESSIONS`，調高此值並同步調高 YAML 的 resources（4 個閒置 session 約 1.7 GB 記憶體） |
 | 節點上的映像檔不見、Pod 起不來 | 主機磁碟超過 85% 觸發 kubelet image GC；`localhost/` 映像檔無法重新拉取，要用附錄 A-1 重新載入 |
 
-> 本文件已於 2026-10-25 實測：把 Step 1–7 的指令區塊原樣抽出，在全新的 HOME 與空的 podman 儲存區（無任何快取）中依序執行。Step 1–5 產生的 12 個檔案和 v3.4 原始檔逐字相同、執行權限一致，附錄 A-3 的 YAML 和 repo 的 `k8s-firefox-rdp.yaml` 只差 `image:` 一行（本文件用自行建置的 localhost 映像檔，repo 預設用 ghcr）；Step 6 從零建出兩個 tag，設定檢查結果與預期表格一致；Step 7 以 RDP 用 bigred/bigred 登入看到分享視窗，另一人在 xrdp 登入畫面選 Session `join10`、填唯讀 PIN 加入只能看。v3.4-share 也已在 tk8s 上經主機 3389 轉發實測：唯讀 PIN 輸入無效、操作 PIN 可輸入、一般登入仍取得獨立 session、錯誤 PIN 被拒、`Ctrl+Alt+S` 可重新顯示 PIN（v3.4 的加入流程以不帶帳密、經 xrdp 登入畫面的方式在本機與 tk8s 重新實測）。尚未從實體 Windows 電腦實測。
+> 本文件已於 2026-10-25 實測：把 Step 1–7 的指令區塊原樣抽出，在全新的 HOME 與空的 podman 儲存區（無任何快取）中依序執行。Step 1–5 產生的 12 個檔案和 v3.4 原始檔逐字相同、執行權限一致，附錄 A-3 的 YAML 和 release/3.4-share 的 `k8s-firefox-rdp.yaml` 只差 `image:` 一行（本文件用自行建置的 localhost 映像檔，該檔預設用 ghcr）；Step 6 從零建出兩個 tag，設定檢查結果與預期表格一致；Step 7 以 RDP 用 bigred/bigred 登入看到分享視窗，另一人在 xrdp 登入畫面選 Session `join10`、填唯讀 PIN 加入只能看。v3.4-share 也已在 tk8s 上經主機 3389 轉發實測：唯讀 PIN 輸入無效、操作 PIN 可輸入、一般登入仍取得獨立 session、錯誤 PIN 被拒、`Ctrl+Alt+S` 可重新顯示 PIN（v3.4 的加入流程以不帶帳密、經 xrdp 登入畫面的方式在本機與 tk8s 重新實測）。尚未從實體 Windows 電腦實測。
