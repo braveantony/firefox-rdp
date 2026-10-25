@@ -1,6 +1,6 @@
 # rdp-firefox
 
-用 Windows 遠端桌面（RDP）登入，就是一個全螢幕 Firefox。以 Alpine Linux 為基底，供 Kubernetes 上多人同時使用：每人各有獨立桌面，也能分享給別人觀看或共同操作。
+用 Windows 遠端桌面（RDP）登入，就是一個全螢幕 Firefox。支援多人同時使用：每人各有獨立桌面，也能分享給別人觀看或共同操作。
 
 ## 簡述
 
