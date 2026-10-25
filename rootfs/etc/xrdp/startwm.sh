@@ -31,7 +31,16 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 143' TERM HUP INT
 
+# -share image only: share this session over VNC with control/view-only PINs
+if [ -f /opt/desktop/session-share.sh ]; then
+  . /opt/desktop/session-share.sh
+fi
+
 openbox &
+
+if [ -n "${SHARE_INFO:-}" ]; then
+  (sleep 2; /opt/desktop/share-info.sh) &
+fi
 
 # Reopen Firefox if the user closes it, until this session's X server is gone
 while [ -S "/tmp/.X11-unix/X${dnum}" ]; do

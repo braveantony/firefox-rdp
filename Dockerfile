@@ -24,6 +24,8 @@ ENV LANG=zh_TW.UTF-8 \
 RUN addgroup -S xrdp && adduser -S -D -H -G xrdp xrdp
 
 COPY rootfs/ /
+# Session-sharing files; only installed when built with SESSION_SHARE=1 (below)
+COPY rootfs-share/ /usr/share/firefox-rdp/share/
 
 # xrdp.ini: keep only the Xorg session type, drop to the xrdp user,
 #           disable drive and sound redirection (no FUSE / PulseAudio in the pod)
@@ -41,6 +43,22 @@ RUN sed -i '/^\[Xvnc\]/,$d' /etc/xrdp/xrdp.ini \
            -e 's/^DisconnectedTimeLimit=0/DisconnectedTimeLimit=120/' \
            -e 's/^Policy=Default/Policy=Separate/' /etc/xrdp/sesman.ini \
  && chmod +x /etc/xrdp/startwm.sh /opt/desktop/*.sh /usr/bin/myssh
+
+# SESSION_SHARE=1 builds the :<version>-share tag. Each session is then shared
+# over VNC on 127.0.0.1:59<display> (x0vncserver) with a control PIN and a
+# view-only PIN; xrdp sections join10..join19 connect to it, so a viewer picks
+# "join<display>" as the Session on the xrdp login screen and enters a PIN as
+# the password. Kept as the last layer so both tags share every layer above.
+ARG SESSION_SHARE=0
+RUN if [ "$SESSION_SHARE" = 1 ]; then \
+      apk add --no-cache tigervnc yad \
+ &&   cp -R /usr/share/firefox-rdp/share/. / \
+ &&   chmod +x /opt/desktop/share-info.sh \
+ &&   for n in $(seq 10 19); do \
+        printf '\n[join%s]\nname=join%s\nlib=libvnc.so\nip=127.0.0.1\nport=59%s\nusername=na\npassword=ask\n' \
+          "$n" "$n" "$n" >> /etc/xrdp/xrdp.ini; \
+      done; \
+    fi
 
 # 3389 = RDP; the web terminals (2200 bash, 2210 SSH) listen on loopback only
 EXPOSE 3389

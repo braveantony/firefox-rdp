@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_config xmlns="http://openbox.org/3.4/rc">
+  <keyboard>
+    <!-- The only key binding: show this session's share PINs again -->
+    <keybind key="C-A-s">
+      <action name="Execute">
+        <command>/opt/desktop/share-info.sh</command>
+      </action>
+    </keybind>
+  </keyboard>
+  <applications>
+    <application class="*">
+      <maximized>true</maximized>
+      <decor>no</decor>
+    </application>
+    <application class="Yad">
+      <maximized>no</maximized>
+      <decor>yes</decor>
+      <position force="yes">
+        <x>center</x>
+        <y>center</y>
+      </position>
+      <layer>above</layer>
+      <focus>yes</focus>
+    </application>
+  </applications>
+</openbox_config>
