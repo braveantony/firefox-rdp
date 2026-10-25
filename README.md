@@ -11,8 +11,6 @@
 - **Session 分享**（`:3.4-share`）：登入後顯示操作 PIN 與唯讀 PIN，別人輸入 PIN 即可加入你的桌面
 - **安全**：密碼於啟動時設定、不寫進映像檔；每個 container 自己產生 TLS 憑證；xrdp 降權執行；斷線的桌面 2 分鐘後自動回收
 
-本 branch：**v3.4-share**。`k8s-firefox-rdp.yaml` 預設使用 `ghcr.io/braveantony/rdp-firefox:3.4-share`。
-
 ## 快速開始
 
 ### Kubernetes
