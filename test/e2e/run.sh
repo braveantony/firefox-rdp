@@ -31,7 +31,13 @@ cleanup() {
   if [ "${E2E_KEEP:-0}" = 1 ]; then
     echo "cluster kept: KUBECONFIG=$KUBECONFIG kind delete cluster --name $cluster"
   else
+    # kind's podman provider leaves the nodes' anonymous volumes (GBs each) behind
+    local vols="" n
+    for n in $(kind get nodes --name "$cluster" 2>/dev/null); do
+      vols="$vols $(podman inspect "$n" --format '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}} {{end}}{{end}}' 2>/dev/null)"
+    done
     kind delete cluster --name "$cluster" >/dev/null 2>&1
+    [ -z "${vols// /}" ] || podman volume rm -f $vols >/dev/null 2>&1
   fi
 }
 trap cleanup EXIT
