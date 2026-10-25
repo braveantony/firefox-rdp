@@ -68,7 +68,7 @@ spec:
         - name: dshm
           mountPath: /dev/shm
       volumes:
-      - name: dshm             # 容器預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
+      - name: dshm             # container 預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
         emptyDir:
           medium: Memory
           sizeLimit: 1Gi

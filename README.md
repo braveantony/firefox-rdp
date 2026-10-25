@@ -8,7 +8,7 @@
 - **多人互不影響**：同一個帳號可多人同時登入，每條連線都有自己的桌面、Firefox、下載目錄與終端機（預設上限 4 個桌面）
 - **中文**：在 Windows 用自己的輸入法打好，複製後在 Firefox 按 `Ctrl+V` 貼上
 - **Web 終端機**：在 Firefox 開 `http://localhost:2200`（bash）或 `http://localhost:2210`（SSH），只能從桌面內開啟
-- **安全**：密碼於啟動時設定、不寫進映像檔；每個容器自己產生 TLS 憑證；xrdp 降權執行；斷線的桌面 2 分鐘後自動回收
+- **安全**：密碼於啟動時設定、不寫進映像檔；每個 container 自己產生 TLS 憑證；xrdp 降權執行；斷線的桌面 2 分鐘後自動回收
 
 本 branch：**v3.2**（不含 session 分享）。`k8s-firefox-rdp.yaml` 預設使用 `ghcr.io/braveantony/rdp-firefox:3.2`。需要分享桌面功能請用 [`main`](https://github.com/braveantony/rdp-firefox)（`:3.4-share`）。
 
@@ -42,7 +42,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 ### 1. 登入
 
-按 `Win+R` 輸入 `mstsc` 開啟遠端桌面連線，連到上面的位址。出現憑證警告時按「是」（每個容器使用自己產生的憑證）。接著會看到 xrdp 登入畫面：Session 保持 `Xorg`，輸入帳號密碼後按 OK。
+按 `Win+R` 輸入 `mstsc` 開啟遠端桌面連線，連到上面的位址。出現憑證警告時按「是」（每個 container 使用自己產生的憑證）。接著會看到 xrdp 登入畫面：Session 保持 `Xorg`，輸入帳號密碼後按 OK。
 
 ![xrdp 登入畫面](docs/images/01-login.png)
 
