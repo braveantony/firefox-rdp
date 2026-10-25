@@ -4,11 +4,11 @@
 
 ## 簡述
 
-- **用戶端免安裝**：Windows 內建的遠端桌面連線即可，不需要 VNC 或任何外掛
-- **多人互不影響**：同一個帳號可多人同時登入，每條連線都有自己的桌面、Firefox、下載目錄與終端機（預設上限 4 個桌面）
-- **中文**：在 Windows 用自己的輸入法打好，複製後在 Firefox 按 `Ctrl+V` 貼上
-- **Web 終端機**：在 Firefox 開 `http://localhost:2200`（bash）或 `http://localhost:2210`（SSH），只能從桌面內開啟
-- **在叢集內驗證 Web 應用**：Firefox 就在 Kubernetes 叢集裡，直接開 `http://<service>.<namespace>` 即可瀏覽叢集內的 Web 服務，不需要安裝 MetalLB 或 kube-vip 取得外部 IP
+- **零安裝、即連即用**：Windows 內建遠端桌面一鍵連線，免裝任何用戶端或外掛，登入即是全螢幕 Firefox
+- **多人並行、彼此隔離**：同一帳號可多人同時登入，每條連線各自擁有專屬的桌面、瀏覽器、下載目錄與終端機，互不干擾
+- **中文輸入無縫接軌**：沿用 Windows 本機輸入法，透過剪貼簿直接貼入 Firefox
+- **瀏覽器即終端機**：在 Firefox 開啟 `localhost:2200`（bash）或 `localhost:2210`（SSH），維運操作一站完成，且僅限桌面內存取
+- **叢集內的 Web 驗證站**：Firefox 身處 Kubernetes 叢集之中，以 `http://<service>.<namespace>` 即可驗證叢集內的 Web 應用，免裝 MetalLB 或 kube-vip，也無需對外暴露服務
 
 ## 快速開始
 
