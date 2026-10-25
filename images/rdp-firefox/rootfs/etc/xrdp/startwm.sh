@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run by xrdp-sesman as RDP_USER for every RDP connection. sesman uses
+# Run by xrdp-sesman as the logged-in account for every RDP connection. sesman uses
 # Policy=Separate, so each connection has its own display; this script gives
 # it its own HOME, runtime dir and D-Bus so concurrent users of the same
 # account never share a Firefox profile. Everything is removed on exit.
@@ -14,9 +14,15 @@ dnum=${dnum%%.*}
 # sesman wrote this display's cookie to the real home; keep using it
 export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
 
-S="/tmp/sess/$dnum"
+# Keyed by display and UID: a stale directory left by another account on the
+# same display number (sticky /tmp/sess) can never block this session
+S="/tmp/sess/$dnum.$(id -u)"
 rm -rf "$S"
-mkdir -p -m 700 "$S/home" "$S/run"
+# Private to this account: it holds the share PINs, and other accounts may be
+# logged in to the same pod (mkdir -p would leave $S itself world-readable)
+umask 077
+mkdir -m 700 "$S"
+mkdir -m 700 "$S/home" "$S/run"
 cp -R /etc/skel/. "$S/home"/
 export HOME="$S/home" XDG_RUNTIME_DIR="$S/run"
 cd "$HOME"

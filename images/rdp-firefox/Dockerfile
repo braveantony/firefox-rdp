@@ -19,7 +19,8 @@ ENV LANG=zh_TW.UTF-8 \
     LC_ALL=zh_TW.UTF-8 \
     TZ=Asia/Taipei
 
-# The RDP login user (RDP_USER, UID 1000) is created at startup from /etc/skel.
+# The RDP login accounts (UID 1000, 1001, ...) are created at startup from
+# /etc/firefox-rdp/users or RDP_USER/RDP_PASSWORD, with homes from /etc/skel.
 # xrdp is the unprivileged user the xrdp listener drops to.
 RUN addgroup -S xrdp && adduser -S -D -H -G xrdp xrdp
 

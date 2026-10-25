@@ -1,6 +1,6 @@
 # Firefox 遠端桌面使用手冊
 
-適用映像檔：`alpine-firefox-rdp:3.4-share`（目前 tk8s 上執行的版本）。建置與部署方式請見 [build-image-v3.4.md](build-image-v3.4.md)。
+適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.5-share`（`:3.4-share` 除了只有單一帳號外操作相同）。安裝方式請見 [README](../README.md#快速開始)。
 
 用 Windows 內建的「遠端桌面連線」登入後，畫面上只有一個全螢幕的 Firefox。多人可以同時連線，各自有獨立的桌面；需要時也可以把自己的桌面分享給別人看或一起操作。
 
@@ -9,8 +9,8 @@
 | 項目 | 值 |
 | --- | --- |
 | 電腦 | `192.168.11.64` |
-| 帳號 | `bigred` |
-| 密碼 | `bigred`（管理者可能已更改，請以管理者告知的為準） |
+| 帳號 | 管理者發給你的帳號（單一帳號的環境通常是 `bigred`） |
+| 密碼 | 管理者發給你的密碼 |
 
 1. 按 `Win+R`，輸入 `mstsc`，按 Enter，開啟「遠端桌面連線」。
 2. 電腦欄位填 `192.168.11.64`，按「連線」。
@@ -20,8 +20,8 @@
    | 欄位 | 填入 |
    | --- | --- |
    | Session | 保持 `Xorg`（預設值） |
-   | username | `bigred` |
-   | password | `bigred` |
+   | username | 你的帳號 |
+   | password | 你的密碼 |
 
 5. 按 OK，登入後就是全螢幕的 Firefox 空白分頁。
 
@@ -40,7 +40,7 @@
 
 | 網址 | 內容 |
 | --- | --- |
-| `http://localhost:2200` | bash 終端機，身分是 `bigred` |
+| `http://localhost:2200` | bash 終端機。只有一個帳號時直接以該帳號進入；有多個帳號時先出現 `login:`，輸入自己的帳號密碼 |
 | `http://localhost:2210` | 直接 SSH 到 `tkadm.taroko`（以 `myssh` 連線） |
 
 - 每開一個分頁就是一個獨立的終端機，有自己的暫存家目錄，關掉分頁就刪除。
@@ -50,10 +50,10 @@
 
 ## 4. 多人同時使用
 
-- 每個人用 `bigred` 登入，都會拿到**自己獨立的桌面**：Firefox 分頁、下載、終端機都不會互相看到或影響。
-- 同時最多 **4 個**桌面。第 5 個人登入時，會看到 `Can't create session for user bigred - Max session limit reached`。
+- 每條連線都會拿到**自己獨立的桌面**：不論用不同帳號，還是多人共用同一個帳號，Firefox 分頁、下載、終端機都不會互相看到或影響。
+- 同時最多 **4 個**桌面（所有帳號合計）。超過時會看到 `Can't create session for user <帳號> - Max session limit reached`。
 - **斷線後無法接回原本的桌面**。重新連線一定會拿到全新的 Firefox，原本的桌面會在斷線 2 分鐘後被回收，裡面的分頁和檔案都會消失。
-- 所有人共用 `bigred` 這個帳號，在終端機用 `ps` 看得到其他人的程式。
+- 共用同一個帳號的人，在終端機用 `ps` 看得到彼此的程式；不同帳號之間看不到對方的檔案與分享 PIN。
 
 ## 5. 分享你的桌面
 
@@ -77,7 +77,7 @@
 3. **password** 填對方給你的 PIN。
 4. 按 OK，就會看到對方的畫面。
 
-> 不要在 username 填 `join10\bigred` 這類名稱：Session 仍是 `Xorg` 時，系統會把它當成帳號，回覆找不到使用者。
+> 不要在 username 填 `join10\<帳號>` 這類名稱：Session 仍是 `Xorg` 時，系統會把它當成帳號，回覆找不到使用者。
 
 ### 5-3 分享時要知道的事
 
@@ -85,14 +85,14 @@
 - 加入者的畫面大小固定跟著擁有者。
 - 加入者的剪貼簿只支援英數字，中文請由擁有者自己貼上。
 - 擁有者斷線後，桌面還會保留 2 分鐘，這段時間內已加入的人仍看得到畫面；桌面被回收時，所有加入者會一起斷線。
-- 加入者不佔用第 4 節的 4 個桌面名額。
+- 加入者不佔用第 4 節的 4 個桌面名額，也不需要有帳號，只要有 PIN 就能加入。
 
 ## 6. 常見問題
 
 | 看到的訊息或現象 | 原因 | 處理 |
 | --- | --- | --- |
 | 憑證警告「無法驗證此遠端電腦的身分識別」 | Pod 使用自己產生的憑證 | 按「是」繼續 |
-| `User does not exist, or could not be authenticated` | 帳密錯誤；或 Session 不是 `Xorg` 卻填了帳號；或 Session 是 `Xorg` 卻在 username 填了 `join10\...` | 一般登入：Session 選 `Xorg`、填 bigred/bigred。加入別人：Session 選 `join<編號>`、只填 PIN |
+| `User does not exist, or could not be authenticated` | 帳密錯誤；或 Session 不是 `Xorg` 卻填了帳號；或 Session 是 `Xorg` 卻在 username 填了 `join10\...` | 一般登入：Session 選 `Xorg`、填自己的帳號密碼。加入別人：Session 選 `join<編號>`、只填 PIN |
 | `VNC password failed` / `Error connecting to user session` | PIN 錯誤，或對方的桌面已經結束 | 向對方確認編號與 PIN（對方按 `Ctrl+Alt+S` 可再看一次）。連續輸錯多次會被暫時封鎖一段時間 |
 | `Max session limit reached` | 已經有 4 個桌面在使用 | 等別人登出；剛斷線的桌面要 2 分鐘後才會釋放 |
 | 重新連線後，原本開的分頁不見了 | 每次連線都是新的桌面，斷線的桌面會被回收 | 無法接回，請重新開啟 |
@@ -100,3 +100,5 @@
 | 不小心關掉 Firefox | — | 等 1 秒會自動重新開啟 |
 
 > 本手冊的步驟已於 2026-10-25 在 tk8s 上，以 FreeRDP 經 `192.168.11.64:3389` 模擬 Windows 遠端桌面連線的操作實測：xrdp 登入畫面一般登入、分享視窗與 `Ctrl+Alt+S`、Session 選 `join10` 後以唯讀 PIN 加入只能看、以操作 PIN 加入可以操作、錯誤 PIN 被拒、第 5 個桌面被拒、localhost:2200 終端機。尚未用實體 Windows 電腦實測；「遠端桌面連線記住帳密時直接進入桌面」一項未實測。
+
+> 3.5-share 的多帳號功能已於 2026-10-25 實測：兩個帳號（其中一組密碼含冒號）在 xrdp 登入畫面各自登入、取得獨立桌面，錯誤密碼與名單外帳號被拒，跨帳號以 PIN 加入分享，以及多帳號時 `localhost:2200` 先要求登入。

@@ -12,6 +12,8 @@ x0vncserver -display ":$dnum" -rfbport "$SHARE_PORT" -localhost \
   > "$S/x0vncserver.log" 2>&1 &
 
 export SHARE_INFO="$S/share.txt"
+: > "$SHARE_INFO"
+chmod 600 "$SHARE_INFO"   # holds the control PIN; other accounts may share this pod
 cat > "$SHARE_INFO" <<SHARE
 <b><big>分享這個 session（編號 ${dnum}）</big></b>
 
