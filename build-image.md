@@ -442,6 +442,8 @@ kubectl -n web-workspace create secret generic firefox-rdp-auth \
 
 ### A-3 部署 YAML
 
+這份 YAML 使用你在 Step 5 自己建置、並以附錄 A-1 匯入節點的 `localhost/alpine-firefox-rdp:3.2`。release/3.2 branch 裡的 `k8s-firefox-rdp.yaml` 則預設使用已發布的 `ghcr.io/braveantony/rdp-firefox:3.2`（兩者只差 `image:` 這一行），不需要自行建置時直接用 repo 的檔案即可。
+
 ```bash
 cd ~/firefox-rdp
 cat > k8s-firefox-rdp.yaml <<'EOF'
@@ -583,4 +585,4 @@ systemctl --user enable podman-restart.service
 | xrdp log 每 5 秒出現一組 `CR-TPDU (Connection Request) failed` | K8s readinessProbe／livenessProbe 的 TCP 檢查，連上就斷，無害 |
 | 節點上的映像檔不見、Pod 起不來 | 主機磁碟超過 85% 觸發 kubelet image GC；`localhost/` 映像檔無法重新拉取，要用附錄 A-1 重新載入 |
 
-> 本文件已於 2026-10-25 實測：把 Step 1–6 的指令區塊原樣抽出，在全新的 HOME 與空的 podman 儲存區（無任何快取）中依序執行。Step 1–4 產生的 9 個檔案與附錄 A-3 的 YAML，和 v3.2 映像檔內的檔案逐字相同；Step 5 從零建出的映像檔，其自訂檔案、xrdp／sesman 設定、帳號、主要套件版本與映像檔設定都和 tk8s 先前部署的 v3.2 相同，設定檢查結果與文件所述一致；Step 6 的容器檢查符合預期，並在 xrdp 登入畫面以 bigred/bigred 登入、在 Firefox 開 localhost:2200 得到 bigred 的終端機。v3.2 先前已在 tk8s 上實測兩人同時連線互不影響、斷線 120 秒後回收、第 5 個連線被拒。尚未從實體 Windows 電腦實測。
+> 本文件已於 2026-10-25 實測：把 Step 1–6 的指令區塊原樣抽出，在全新的 HOME 與空的 podman 儲存區（無任何快取）中依序執行。Step 1–4 產生的 9 個檔案，和 v3.2 映像檔內的檔案逐字相同（附錄 A-3 的 YAML 使用自行建置的 localhost 映像檔，和 release/3.2 的 `k8s-firefox-rdp.yaml` 只差 `image:` 一行）；Step 5 從零建出的映像檔，其自訂檔案、xrdp／sesman 設定、帳號、主要套件版本與映像檔設定都和 tk8s 先前部署的 v3.2 相同，設定檢查結果與文件所述一致；Step 6 的容器檢查符合預期，並在 xrdp 登入畫面以 bigred/bigred 登入、在 Firefox 開 localhost:2200 得到 bigred 的終端機。v3.2 先前已在 tk8s 上實測兩人同時連線互不影響、斷線 120 秒後回收、第 5 個連線被拒。尚未從實體 Windows 電腦實測。
