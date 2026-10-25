@@ -24,7 +24,7 @@
 | 中文 | RDP 剪貼簿為 UTF-8：在 Windows 用輸入法打好，複製後在 Firefox 按 `Ctrl+V` |
 | Web 終端機 | 在 Pod 內的 Firefox 開 `http://localhost:2200`（bash）、`http://localhost:2210`（myssh）；只綁 127.0.0.1 |
 | Session 分享（`-share`） | 每個 session 在 127.0.0.1 上以 x0vncserver 分享自己的畫面，並產生隨機的操作 PIN 與唯讀 PIN；其他人在 xrdp 登入畫面的 Session 選 `join<編號>`、password 填 PIN 加入 |
-| 安全 | 密碼由環境變數在啟動時設定（不寫進映像檔）；每個容器自己產生 TLS 憑證與 RSA 金鑰；xrdp 監聽程式降權為 `xrdp` 使用者；Xorg、Firefox、終端機都以登入帳號執行 |
+| 安全 | 密碼由環境變數在啟動時設定（不寫進映像檔）；每個 container 自己產生 TLS 憑證與 RSA 金鑰；xrdp 監聽程式降權為 `xrdp` 使用者；Xorg、Firefox、終端機都以登入帳號執行 |
 
 ## 前置需求
 
@@ -42,7 +42,7 @@ podman --version
 df -h ~
 ```
 
-> **注意**：如果建置的這台主機同時跑著 K8s 節點（例如 tk8s 的節點容器共用主機磁碟），磁碟使用率超過 85% 時 kubelet 會開始刪除節點上沒在用的映像檔，超過 95% 會驅逐 Pod。建置前請確認建置後仍低於 85%。
+> **注意**：如果建置的這台主機同時跑著 K8s 節點（例如 tk8s 的節點 container 共用主機磁碟），磁碟使用率超過 85% 時 kubelet 會開始刪除節點上沒在用的映像檔，超過 95% 會驅逐 Pod。建置前請確認建置後仍低於 85%。
 
 ## Step 1：建立專案目錄
 
@@ -80,9 +80,9 @@ firefox-rdp/
 
 ## Step 2：建立共用的設定檔與腳本（rootfs/）
 
-### 2-1 容器入口腳本 entrypoint.sh
+### 2-1 container 入口腳本 entrypoint.sh
 
-由 tini 以 root 啟動（xrdp-sesman 需要 root 才能做 PAM 驗證並切換成登入帳號）。依序：建立登入帳號並設定密碼、產生本容器專用的 TLS 憑證與 RSA 金鑰、啟動 sesman 與 xrdp、啟動兩個只綁 127.0.0.1 的 ttyd。任何一個服務結束就讓容器退出，交給 K8s 重啟。
+由 tini 以 root 啟動（xrdp-sesman 需要 root 才能做 PAM 驗證並切換成登入帳號）。依序：建立登入帳號並設定密碼、產生本 container 專用的 TLS 憑證與 RSA 金鑰、啟動 sesman 與 xrdp、啟動兩個只綁 127.0.0.1 的 ttyd。任何一個服務結束就讓 container 退出，交給 K8s 重啟。
 
 ```bash
 cd ~/firefox-rdp
@@ -406,7 +406,7 @@ EOF
 重點：
 
 - 基底固定 `alpine:3.22`，不用 `latest`。
-- 刪除 apk 在建置時產生的 `cert.pem`、`key.pem`、`rsakeys.ini`，否則所有容器會共用同一把寫死在映像檔裡的私鑰；改由 entrypoint 在每個容器啟動時產生。
+- 刪除 apk 在建置時產生的 `cert.pem`、`key.pem`、`rsakeys.ini`，否則所有 container 會共用同一把寫死在映像檔裡的私鑰；改由 entrypoint 在每個 container 啟動時產生。
 - 用 `sed` 修改套件預設的 `xrdp.ini` 與 `sesman.ini`：只保留 Xorg session、xrdp 降權為 `xrdp` 使用者、關閉磁碟與音效轉送、每條連線獨立 session、斷線 120 秒後回收。
 - 最後一層才看 `SESSION_SHARE`：等於 1 時安裝 tigervnc（x0vncserver）與 yad、套用 `rootfs-share/`、在 xrdp.ini 加上 `join10`–`join19` 十個區段。這些區段的 `ip` 固定為 127.0.0.1，只能加入本 Pod 內的 session。
 
@@ -527,11 +527,11 @@ done
 | xrdp.ini 設定 | `runtime_user=xrdp rdpdr=false rdpsnd=false` | 同左 |
 | sesman.ini 設定 | `AllowRootLogin=false KillDisconnected=true DisconnectedTimeLimit=120 Policy=Separate` | 同左 |
 | x0vncserver | `none` | `/usr/bin/x0vncserver` |
-| keys in image | `0`（金鑰在容器啟動時才產生） | `0` |
+| keys in image | `0`（金鑰在 container 啟動時才產生） | `0` |
 
 ## Step 7：在本機驗證
 
-用 13389 埠在本機跑 `-share` 版的測試容器，帳密為 `bigred` / `bigred`：
+用 13389 埠在本機跑 `-share` 版的測試 container，帳密為 `bigred` / `bigred`：
 
 ```bash
 podman run -d --name rdp-test -p 13389:3389 --shm-size 1g \
@@ -557,7 +557,7 @@ podman exec rdp-test sh -c 'netstat -tln; ps -o user,args | grep -E "xrdp|sesman
 
 完整的登入與加入操作說明見附錄 C。
 
-驗證完刪除測試容器：
+驗證完刪除測試 container：
 
 ```bash
 podman rm -f rdp-test
@@ -569,7 +569,7 @@ podman rm -f rdp-test
 
 ## 附錄 A：部署到 tk8s
 
-以下是目前 tk8s 上的部署方式。tk8s 的節點是 podman 容器，節點內只有 `crictl`，所以用主機上的 root podman 直接把映像檔載入每個 worker 的 CRI-O 儲存區。
+以下是目前 tk8s 上的部署方式。tk8s 的節點是 podman container，節點內只有 `crictl`，所以用主機上的 root podman 直接把映像檔載入每個 worker 的 CRI-O 儲存區。
 
 ### A-1 載入映像檔到每個 worker
 
@@ -678,7 +678,7 @@ spec:
         - name: dshm
           mountPath: /dev/shm
       volumes:
-      - name: dshm             # 容器預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
+      - name: dshm             # container 預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
         emptyDir:
           medium: Memory
           sizeLimit: 1Gi
@@ -709,7 +709,7 @@ kubectl -n web-workspace exec deploy/firefox-rdp -- netstat -tln
 
 ### A-4 讓區網的 Windows 連得到（主機轉發）
 
-tk8s 節點在主機內部網段，Windows 連不到 NodePort。在主機上用一個 socat 容器把主機的 3389 轉到節點的 30389：
+tk8s 節點在主機內部網段，Windows 連不到 NodePort。在主機上用一個 socat container 把主機的 3389 轉到節點的 30389：
 
 ```bash
 podman run -d --name rdp-forward --restart=always --network host \
@@ -718,7 +718,7 @@ podman run -d --name rdp-forward --restart=always --network host \
 
 Windows「遠端桌面連線」填主機的 IP（例如 `192.168.11.64`），帳號 `bigred`、密碼 `bigred`。
 
-主機重開機後要讓轉發容器自動恢復，需執行一次：
+主機重開機後要讓轉發 container 自動恢復，需執行一次：
 
 ```bash
 sudo loginctl enable-linger $USER

@@ -14,7 +14,7 @@
 | 多人同時使用 | sesman `Policy=Separate`：同一個帳號的每條連線各有自己的桌面、Firefox profile、HOME，互不影響 |
 | 中文 | RDP 剪貼簿為 UTF-8：在 Windows 用輸入法打好，複製後在 Firefox 按 `Ctrl+V` |
 | Web 終端機 | 在 Pod 內的 Firefox 開 `http://localhost:2200`（bash）、`http://localhost:2210`（myssh）；只綁 127.0.0.1 |
-| 安全 | 密碼由環境變數在啟動時設定（不寫進映像檔）；每個容器自己產生 TLS 憑證與 RSA 金鑰；xrdp 監聽程式降權為 `xrdp` 使用者；Xorg、Firefox、終端機都以登入帳號執行 |
+| 安全 | 密碼由環境變數在啟動時設定（不寫進映像檔）；每個 container 自己產生 TLS 憑證與 RSA 金鑰；xrdp 監聽程式降權為 `xrdp` 使用者；Xorg、Firefox、終端機都以登入帳號執行 |
 
 ## 前置需求
 
@@ -32,7 +32,7 @@ podman --version
 df -h ~
 ```
 
-> **注意**：如果建置的這台主機同時跑著 K8s 節點（例如 tk8s 的節點容器共用主機磁碟），磁碟使用率超過 85% 時 kubelet 會開始刪除節點上沒在用的映像檔，超過 95% 會驅逐 Pod。建置前請確認建置後仍低於 85%。
+> **注意**：如果建置的這台主機同時跑著 K8s 節點（例如 tk8s 的節點 container 共用主機磁碟），磁碟使用率超過 85% 時 kubelet 會開始刪除節點上沒在用的映像檔，超過 95% 會驅逐 Pod。建置前請確認建置後仍低於 85%。
 
 ## Step 1：建立專案目錄
 
@@ -64,9 +64,9 @@ firefox-rdp/
 
 ## Step 2：建立設定檔與腳本
 
-### 2-1 容器入口腳本 entrypoint.sh
+### 2-1 container 入口腳本 entrypoint.sh
 
-由 tini 以 root 啟動（xrdp-sesman 需要 root 才能做 PAM 驗證並切換成登入帳號）。依序：建立登入帳號並設定密碼、產生本容器專用的 TLS 憑證與 RSA 金鑰、啟動 sesman 與 xrdp、啟動兩個只綁 127.0.0.1 的 ttyd。任何一個服務結束就讓容器退出，交給 K8s 重啟。
+由 tini 以 root 啟動（xrdp-sesman 需要 root 才能做 PAM 驗證並切換成登入帳號）。依序：建立登入帳號並設定密碼、產生本 container 專用的 TLS 憑證與 RSA 金鑰、啟動 sesman 與 xrdp、啟動兩個只綁 127.0.0.1 的 ttyd。任何一個服務結束就讓 container 退出，交給 K8s 重啟。
 
 ```bash
 cd ~/firefox-rdp
@@ -287,7 +287,7 @@ EOF
 重點：
 
 - 基底固定 `alpine:3.22`，不用 `latest`。
-- 刪除 apk 在建置時產生的 `cert.pem`、`key.pem`、`rsakeys.ini`，否則所有容器會共用同一把寫死在映像檔裡的私鑰；改由 entrypoint 在每個容器啟動時產生。
+- 刪除 apk 在建置時產生的 `cert.pem`、`key.pem`、`rsakeys.ini`，否則所有 container 會共用同一把寫死在映像檔裡的私鑰；改由 entrypoint 在每個 container 啟動時產生。
 - 用 `sed` 修改套件預設的 `xrdp.ini` 與 `sesman.ini`：只保留 Xorg session、xrdp 降權為 `xrdp` 使用者、關閉磁碟與音效轉送、每條連線獨立 session、斷線 120 秒後回收。
 
 ```bash
@@ -379,7 +379,7 @@ podman run --rm --entrypoint sh localhost/alpine-firefox-rdp:3.2 -c '
 
 ## Step 6：在本機驗證
 
-用 13389 埠在本機跑一個測試容器，帳密為 `bigred` / `bigred`：
+用 13389 埠在本機跑一個測試 container，帳密為 `bigred` / `bigred`：
 
 ```bash
 podman run -d --name rdp-test -p 13389:3389 --shm-size 1g \
@@ -398,7 +398,7 @@ podman exec rdp-test sh -c 'netstat -tln; ps -o user,args | grep -E "xrdp|sesman
 
 接著用 Windows「遠端桌面連線」連到 `<這台主機的 IP>:13389`。出現 xrdp 登入畫面時，Session 保持 `Xorg`，username `bigred`、password `bigred`，登入後應看到全螢幕的 Firefox 空白分頁。在網址列輸入 `localhost:2200` 應出現 bash 終端機，`whoami` 顯示 `bigred`。
 
-驗證完刪除測試容器：
+驗證完刪除測試 container：
 
 ```bash
 podman rm -f rdp-test
@@ -410,7 +410,7 @@ podman rm -f rdp-test
 
 ## 附錄 A：部署到 tk8s
 
-以下是 tk8s 上的部署方式。tk8s 的節點是 podman 容器，節點內只有 `crictl`，所以用主機上的 root podman 直接把映像檔載入每個 worker 的 CRI-O 儲存區。
+以下是 tk8s 上的部署方式。tk8s 的節點是 podman container，節點內只有 `crictl`，所以用主機上的 root podman 直接把映像檔載入每個 worker 的 CRI-O 儲存區。
 
 ### A-1 載入映像檔到每個 worker
 
@@ -517,7 +517,7 @@ spec:
         - name: dshm
           mountPath: /dev/shm
       volumes:
-      - name: dshm             # 容器預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
+      - name: dshm             # container 預設 /dev/shm 只有 64MiB，Firefox 分頁容易崩潰
         emptyDir:
           medium: Memory
           sizeLimit: 1Gi
@@ -548,7 +548,7 @@ kubectl -n web-workspace exec deploy/firefox-rdp -- netstat -tln
 
 ### A-4 讓區網的 Windows 連得到（主機轉發）
 
-tk8s 節點在主機內部網段，Windows 連不到 NodePort。在主機上用一個 socat 容器把主機的 3389 轉到節點的 30389：
+tk8s 節點在主機內部網段，Windows 連不到 NodePort。在主機上用一個 socat container 把主機的 3389 轉到節點的 30389：
 
 ```bash
 podman run -d --name rdp-forward --restart=always --network host \
@@ -557,7 +557,7 @@ podman run -d --name rdp-forward --restart=always --network host \
 
 Windows「遠端桌面連線」填主機的 IP（例如 `192.168.11.64`）。出現 xrdp 登入畫面時，Session 保持 `Xorg`，帳號 `bigred`、密碼 `bigred`。
 
-主機重開機後要讓轉發容器自動恢復，需執行一次：
+主機重開機後要讓轉發 container 自動恢復，需執行一次：
 
 ```bash
 sudo loginctl enable-linger $USER
@@ -585,4 +585,4 @@ systemctl --user enable podman-restart.service
 | xrdp log 每 5 秒出現一組 `CR-TPDU (Connection Request) failed` | K8s readinessProbe／livenessProbe 的 TCP 檢查，連上就斷，無害 |
 | 節點上的映像檔不見、Pod 起不來 | 主機磁碟超過 85% 觸發 kubelet image GC；`localhost/` 映像檔無法重新拉取，要用附錄 A-1 重新載入 |
 
-> 本文件已於 2026-10-25 實測：把 Step 1–6 的指令區塊原樣抽出，在全新的 HOME 與空的 podman 儲存區（無任何快取）中依序執行。Step 1–4 產生的 9 個檔案，和 v3.2 映像檔內的檔案逐字相同（附錄 A-3 的 YAML 使用自行建置的 localhost 映像檔，和 release/3.2 的 `k8s-firefox-rdp.yaml` 只差 `image:` 一行）；Step 5 從零建出的映像檔，其自訂檔案、xrdp／sesman 設定、帳號、主要套件版本與映像檔設定都和 tk8s 先前部署的 v3.2 相同，設定檢查結果與文件所述一致；Step 6 的容器檢查符合預期，並在 xrdp 登入畫面以 bigred/bigred 登入、在 Firefox 開 localhost:2200 得到 bigred 的終端機。v3.2 先前已在 tk8s 上實測兩人同時連線互不影響、斷線 120 秒後回收、第 5 個連線被拒。尚未從實體 Windows 電腦實測。
+> 本文件已於 2026-10-25 實測：把 Step 1–6 的指令區塊原樣抽出，在全新的 HOME 與空的 podman 儲存區（無任何快取）中依序執行。Step 1–4 產生的 9 個檔案，和 v3.2 映像檔內的檔案逐字相同（附錄 A-3 的 YAML 使用自行建置的 localhost 映像檔，和 release/3.2 的 `k8s-firefox-rdp.yaml` 只差 `image:` 一行）；Step 5 從零建出的映像檔，其自訂檔案、xrdp／sesman 設定、帳號、主要套件版本與映像檔設定都和 tk8s 先前部署的 v3.2 相同，設定檢查結果與文件所述一致；Step 6 的 container 檢查符合預期，並在 xrdp 登入畫面以 bigred/bigred 登入、在 Firefox 開 localhost:2200 得到 bigred 的終端機。v3.2 先前已在 tk8s 上實測兩人同時連線互不影響、斷線 120 秒後回收、第 5 個連線被拒。尚未從實體 Windows 電腦實測。
