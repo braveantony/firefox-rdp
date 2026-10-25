@@ -26,7 +26,7 @@ spec:
                 operator: DoesNotExist
       containers:
       - name: desktop
-        image: localhost/alpine-firefox-rdp:3.4         # 需要分享 session 時改用 :3.4-share
+        image: localhost/alpine-firefox-rdp:3.4-share   # 不需要分享 session 時改用 :3.4
         imagePullPolicy: IfNotPresent
         # Runs as root: xrdp-sesman needs PAM and setuid to the login user (RDP_USER).
         # Xorg, openbox and Firefox run as RDP_USER; the xrdp listener drops to user xrdp.

@@ -1,45 +1,45 @@
 # firefox-rdp
 
-Alpine Linux 容器：用 Windows「遠端桌面連線」（RDP）登入後，畫面上只有一個全螢幕的 Firefox。設計給 Kubernetes 上多人同時使用。
+Alpine Linux 容器：用 Windows「遠端桌面連線」（RDP）登入後，畫面上只有一個全螢幕的 Firefox。設計給 Kubernetes 上多人同時使用，也能把自己的桌面分享給別人看或一起操作。
 
-本 branch：**v3.4**（`k8s-firefox-rdp.yaml` 預設使用不含分享功能的 `:3.4`）
+本 branch：**v3.4-share**（`k8s-firefox-rdp.yaml` 預設使用 `:3.4-share`）
 
-## 版本與映像檔
+## 版本比較
 
-同一份原始碼用建置參數 `SESSION_SHARE` 建出兩個 tag：
+| | v3.2 | v3.4 | v3.4-share |
+| --- | --- | --- | --- |
+| 映像檔 | `ghcr.io/braveantony/firefox-rdp:3.2` | `ghcr.io/braveantony/firefox-rdp:3.4` | `ghcr.io/braveantony/firefox-rdp:3.4-share` |
+| 多人同帳號同時登入、各自獨立桌面 | ✅ | ✅ | ✅ |
+| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ |
+| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | — | ✅ |
+| 映像檔大小 | 約 790 MB | 約 790 MB | 約 1.04 GB |
+| 原始碼 branch | [`release/3.2`](../../tree/release/3.2) | [`release/3.4`](../../tree/release/3.4) | [`release/3.4-share`](../../tree/release/3.4-share)（= `main`） |
 
-| 映像檔 | 功能 |
-| --- | --- |
-| `ghcr.io/braveantony/firefox-rdp:3.4` | 多人用同一個帳號同時登入，每條連線一個獨立桌面（與 3.2 相同） |
-| `ghcr.io/braveantony/firefox-rdp:3.4-share` | 同上，再加上 session 分享：其他人可用操作 PIN 或唯讀 PIN 加入某人的桌面 |
-
-```bash
-podman build -t alpine-firefox-rdp:3.4 .
-podman build --build-arg SESSION_SHARE=1 -t alpine-firefox-rdp:3.4-share .
-```
+v3.4 與 v3.4-share 是同一份原始碼，用建置參數 `SESSION_SHARE` 區分；兩者的 branch 只差 YAML 預設使用的 tag 與使用手冊。各版本的差異說明見 [Releases](../../releases)。
 
 ## 功能
 
 - xrdp 0.10 + xorgxrdp：每條 RDP 連線都有自己獨立的 Xorg 桌面，解析度跟著用戶端視窗
-- 多人可用同一個帳號同時登入，各自的 Firefox、HOME、終端機互不影響（sesman `Policy=Separate`）
+- 多人可用同一個帳號同時登入，各自的 Firefox、HOME、終端機互不影響（sesman `Policy=Separate`），同時最多 4 個桌面（`MAX_SESSIONS`）
 - 中文：RDP 剪貼簿為 UTF-8，在 Windows 打好中文複製後貼進 Firefox
 - Web 終端機：在 Pod 內的 Firefox 開 `http://localhost:2200`（bash）、`http://localhost:2210`（SSH），只綁 127.0.0.1
 - 密碼於啟動時由環境變數設定；每個容器自己產生 TLS 憑證與 RSA 金鑰；xrdp 降權執行
-- `:3.4-share` 另有：每個 session 以 x0vncserver 在 127.0.0.1 分享畫面，登入時顯示操作 PIN／唯讀 PIN，其他人在 xrdp 登入畫面選 Session `join<編號>` 並輸入 PIN 加入
+- **Session 分享（`:3.4-share`）**：登入後顯示這個桌面的編號、操作 PIN、唯讀 PIN；其他人在 xrdp 登入畫面的 Session 選 `join<編號>`，password 填 PIN 即可加入
 
 ## 快速試用
 
 ```bash
 podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
   -e RDP_USER=bigred -e RDP_PASSWORD=bigred \
-  ghcr.io/braveantony/firefox-rdp:3.4
+  ghcr.io/braveantony/firefox-rdp:3.4-share
 ```
 
 用遠端桌面連線到 `<主機 IP>:13389`，在 xrdp 登入畫面 Session 保持 `Xorg`，輸入帳密登入。
 
 ## 文件
 
-- [build-image-v3.4.md](build-image-v3.4.md)：從零建置 `:3.4` 與 `:3.4-share`，並部署到 Kubernetes（tk8s）的完整步驟，含 session 分享的使用方式
+- [user-guide.md](user-guide.md)：使用手冊（連線登入、Firefox 與中文、終端機、多人使用、分享與加入桌面、常見問題）
+- [build-image-v3.4.md](build-image-v3.4.md)：從零建置 `:3.4` 與 `:3.4-share`，並部署到 Kubernetes（tk8s）的完整步驟
 - [build-image.md](build-image.md)：v3.2（只有多人獨立 session）的建置步驟
 
 ## 檔案
