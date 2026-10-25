@@ -13,9 +13,9 @@ Alpine Linux 容器：用 Windows「遠端桌面連線」（RDP）登入後，�
 | localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ |
 | 分享自己的桌面（操作 PIN／唯讀 PIN） | — | — | ✅ |
 | 映像檔大小 | 約 790 MB | 約 790 MB | 約 1.04 GB |
-| 原始碼 branch | [`release/3.2`](../../tree/release/3.2) | [`release/3.4`](../../tree/release/3.4) | [`release/3.4-share`](../../tree/release/3.4-share)（= `main`） |
+| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | tag [`v3.4`](../../tree/v3.4) | branch [`release/3.4-share`](../../tree/release/3.4-share)（= `main`） |
 
-v3.4 與 v3.4-share 是同一份原始碼，用建置參數 `SESSION_SHARE` 區分；兩者的 branch 只差 YAML 預設使用的 tag 與使用手冊。各版本的差異說明見 [Releases](../../releases)。
+v3.4 與 v3.4-share 是同一份原始碼，用建置參數 `SESSION_SHARE` 區分；tag `v3.4` 與 `release/3.4-share` 只差 YAML 預設使用的 tag 與使用手冊。各版本的差異說明見 [Releases](../../releases)。
 
 ## 功能
 
