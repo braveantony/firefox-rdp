@@ -6,16 +6,16 @@ Alpine Linux 容器：用 Windows「遠端桌面連線」（RDP）登入後，�
 
 ## 版本比較
 
-| | v3.2 | v3.4 | v3.4-share |
-| --- | --- | --- | --- |
-| 映像檔 | `ghcr.io/braveantony/firefox-rdp:3.2` | `ghcr.io/braveantony/firefox-rdp:3.4` | `ghcr.io/braveantony/firefox-rdp:3.4-share` |
-| 多人同帳號同時登入、各自獨立桌面 | ✅ | ✅ | ✅ |
-| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ |
-| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | — | ✅ |
-| 映像檔大小 | 約 790 MB | 約 790 MB | 約 1.04 GB |
-| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | tag [`v3.4`](../../tree/v3.4) | branch [`release/3.4-share`](../../tree/release/3.4-share)（= `main`） |
+| | v3.2 | v3.4-share |
+| --- | --- | --- |
+| 映像檔 | `ghcr.io/braveantony/firefox-rdp:3.2` | `ghcr.io/braveantony/firefox-rdp:3.4-share` |
+| 多人同帳號同時登入、各自獨立桌面 | ✅ | ✅ |
+| localhost:2200／2210 Web 終端機 | ✅ | ✅ |
+| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ |
+| 映像檔大小 | 約 790 MB | 約 1.04 GB |
+| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share)（= `main`） |
 
-v3.4 與 v3.4-share 是同一份原始碼，用建置參數 `SESSION_SHARE` 區分；tag `v3.4` 與 `release/3.4-share` 只差 YAML 預設使用的 tag 與使用手冊。各版本的差異說明見 [Releases](../../releases)。
+本 branch 的 Dockerfile 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `:3.4-share`；`SESSION_SHARE=0`（預設）建出不含分享功能的 `:3.4`，功能與 v3.2 相同，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
 
 ## 功能
 
@@ -50,3 +50,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 | `rootfs/` | 兩個 tag 都會複製進映像檔 `/` 的設定檔與腳本 |
 | `rootfs-share/` | 只有 `:3.4-share` 會套用的分享功能檔案 |
 | `k8s-firefox-rdp.yaml` | Kubernetes Deployment 與 NodePort Service（30389） |
+
+## 授權
+
+[MIT License](LICENSE)
