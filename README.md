@@ -1,16 +1,32 @@
 # rdp-firefox
 
-用 Windows 遠端桌面（RDP）登入，就是一個全螢幕 Firefox。支援多人同時使用：每人各有獨立桌面，也能分享給別人觀看或共同操作。
+用 Windows 遠端桌面（RDP）登入，就進入 Kubernetes 叢集：全螢幕 Firefox 與 Web 終端機一應俱全。支援多人同時使用：每人各有獨立桌面，也能分享給別人觀看或共同操作。
 
 ## 簡述
 
+- **叢集的入口，Web 與 CLI 兼備**：一登入就身處 Kubernetes 叢集之中
+  - **Web**：Firefox 以 `http://<service>.<namespace>` 直達叢集內的 Web 應用
+  - **CLI**：`localhost:2210` 直接 SSH 到叢集管理 pod（tkadm）管理 Kubernetes，kubeconfig 不必流出叢集之外
+  - 免裝 MetalLB 或 kube-vip，也無需對外暴露任何服務
 - **零安裝、即連即用**：Windows 內建遠端桌面一鍵連線，免裝任何用戶端或外掛，登入即是全螢幕 Firefox
 - **多人並行、彼此隔離**：多個帳號、甚至同一帳號都能多人同時登入，每條連線各自擁有專屬的桌面、瀏覽器、下載目錄與終端機，互不干擾
 - **一行指令完成部署**：`curl | bash` 即裝即用；帳號清單收進 Secret，以 Kustomize 宣告式管理，改名單就自動滾動更新
 - **中文輸入無縫接軌**：沿用 Windows 本機輸入法，透過剪貼簿直接貼入 Firefox
-- **瀏覽器即終端機**：在 Firefox 開啟 `localhost:2200`（bash）或 `localhost:2210`（SSH），維運操作一站完成，且僅限桌面內存取
 - **即時協作、權限分明**（`-share` 版）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
-- **叢集內的 Web 驗證站**：Firefox 身處 Kubernetes 叢集之中，以 `http://<service>.<namespace>` 即可驗證叢集內的 Web 應用，免裝 MetalLB 或 kube-vip，也無需對外暴露服務
+
+## 先決條件
+
+### Kubernetes 叢集
+
+- kubectl（內建 Kustomize）、curl、bash，以及有權限建立 Namespace、Deployment、Service、Secret 的 kubeconfig
+- 節點能連到 `ghcr.io` 下載映像檔（約 1 GB）；無法上網的叢集請改用私有 registry（見[進階](#進階多個帳號kustomize)）
+- 資源：pod 需求 1 CPU／2 GiB，上限 4 CPU／4 GiB
+- NodePort `30389` 未被占用，且用戶端連得到節點
+
+### 遠端桌面用戶端
+
+- **Windows**：內建的「遠端桌面連線」（`mstsc`）
+- **macOS**：Mac App Store 的 Windows App；新增 PC 時 Credentials 選 **Ask when required**，才會出現 xrdp 登入畫面
 
 ## 快速開始
 
@@ -23,7 +39,6 @@ curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/instal
 腳本用目前的 kubeconfig 部署到 namespace `web-workspace`，完成後印出連線位址。用遠端桌面連線到 `<節點 IP>:30389`，帳號 `bigred`、密碼 `bigred`。
 
 - 要多個帳號或改密碼，請改用下方的 [進階：多個帳號（Kustomize）](#進階多個帳號kustomize)。
-- 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。
 - 讓區網的 Windows 直接用主機 IP 連線（不用記 NodePort），見 [build-image-v3.4.md](docs/build-image-v3.4.md) 附錄 A-4。
 - 移除：`kubectl delete namespace web-workspace`
 
@@ -49,13 +64,15 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 登入後畫面上只有全螢幕的 Firefox。關掉它會在 1 秒內自動重開；解析度跟著遠端桌面視窗大小。中文請在 Windows 打好後複製，再到 Firefox 按 `Ctrl+V`。下載檔案時會詢問儲存位置。
 
+在網址列輸入 `http://<service>.<namespace>`（非 80 埠時加 `:<port>`）即可開啟叢集內的 Web 服務，不需要 NodePort、LoadBalancer 或 Ingress。
+
 ![全螢幕的 Firefox](docs/images/03-firefox.png)
 
 > 每條連線都是獨立的新桌面：斷線後無法接回，原本的分頁與下載的檔案會在 2 分鐘後清除。
 
 ### 3. Web 終端機
 
-在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`）。每個分頁都是獨立的終端機，關掉即清除。
+在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`）。每個分頁都是獨立的終端機，關掉即清除。終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
 
 只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免以別人的身分操作。
 
