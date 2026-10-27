@@ -88,13 +88,14 @@ if [ $# -eq 1 ]; then
 else
   # Several accounts share this pod: the bash terminal asks each tab to log in,
   # so nobody gets a shell as someone else; the SSH terminal only runs the ssh
-  # client, as an unprivileged account without a password
+  # client, as an unprivileged account without a password, and asks each tab
+  # which account to use on the target
   id webterm >/dev/null 2>&1 || adduser -S -D -H -s /sbin/nologin webterm
   uid=$(id -u webterm)
   gid=$(id -g webterm)
   ttyd $TTYD_OPTS -p 2200 login &
   ttyd $TTYD_OPTS -u "$uid" -g "$gid" -p 2210 -t "$SSH_THEME" \
-    /opt/desktop/term.sh /usr/bin/myssh "$SSH_TARGET" &
+    /opt/desktop/term.sh /opt/desktop/ssh-login.sh "$SSH_TARGET" &
 fi
 
 # Any daemon exiting stops the container so K8s restarts it

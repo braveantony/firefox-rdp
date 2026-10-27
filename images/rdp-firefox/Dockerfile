@@ -44,7 +44,8 @@ RUN sed -i '/^\[Xvnc\]/,$d' /etc/xrdp/xrdp.ini \
            -e 's/^KillDisconnected=false/KillDisconnected=true/' \
            -e 's/^DisconnectedTimeLimit=0/DisconnectedTimeLimit=120/' \
            -e 's/^Policy=Default/Policy=Separate/' /etc/xrdp/sesman.ini \
- && chmod +x /etc/xrdp/startwm.sh /opt/desktop/*.sh /usr/bin/myssh
+ && chmod +x /etc/xrdp/startwm.sh /opt/desktop/*.sh /usr/bin/myssh \
+ && chmod 644 /etc/ssh/ssh_config.d/tkadm.conf
 
 # SESSION_SHARE=1 builds the :<version>-share tag. Each session is then shared
 # over VNC on 127.0.0.1:59<display> (x0vncserver) with a control PIN and a
