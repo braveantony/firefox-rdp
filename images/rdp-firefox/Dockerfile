@@ -7,6 +7,7 @@ RUN apk add --no-cache \
       dbus dbus-x11 \
       font-wqy-zenhei font-dejavu fontconfig \
       xkeyboard-config \
+      fcitx5 fcitx5-chewing fcitx5-gtk3 \
       ttyd bash nano openssh-client openssl \
       tini tzdata musl-locales \
  && fc-cache -f \
