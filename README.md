@@ -14,6 +14,20 @@
 - **中文輸入無縫接軌**：沿用 Windows 本機輸入法，透過剪貼簿直接貼入 Firefox
 - **即時協作、權限分明**（`-share` 版）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
 
+## 先決條件
+
+### Kubernetes 叢集
+
+- kubectl（內建 Kustomize）、curl、bash，以及有權限建立 Namespace、Deployment、Service、Secret 的 kubeconfig
+- 節點能連到 `ghcr.io` 下載映像檔（約 1 GB）；無法上網的叢集請改用私有 registry（見[進階](#進階多個帳號kustomize)）
+- 資源：pod 需求 1 CPU／2 GiB，上限 4 CPU／4 GiB
+- NodePort `30389` 未被占用，且用戶端連得到節點
+
+### 遠端桌面用戶端
+
+- **Windows**：內建的「遠端桌面連線」（`mstsc`）
+- **macOS**：Mac App Store 的 Windows App；新增 PC 時 Credentials 選 **Ask when required**，才會出現 xrdp 登入畫面
+
 ## 快速開始
 
 ### Kubernetes
@@ -25,7 +39,6 @@ curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/instal
 腳本用目前的 kubeconfig 部署到 namespace `web-workspace`，完成後印出連線位址。用遠端桌面連線到 `<節點 IP>:30389`，帳號 `bigred`、密碼 `bigred`。
 
 - 要多個帳號或改密碼，請改用下方的 [進階：多個帳號（Kustomize）](#進階多個帳號kustomize)。
-- 節點需要能連到 `ghcr.io` 下載映像檔（約 1 GB）。
 - 讓區網的 Windows 直接用主機 IP 連線（不用記 NodePort），見 [build-image-v3.4.md](docs/build-image-v3.4.md) 附錄 A-4。
 - 移除：`kubectl delete namespace web-workspace`
 
