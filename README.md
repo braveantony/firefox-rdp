@@ -46,7 +46,7 @@ curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/instal
 ```bash
 podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
   -e RDP_USER=bigred -e RDP_PASSWORD=bigred \
-  ghcr.io/braveantony/rdp-firefox:3.6-share
+  ghcr.io/braveantony/rdp-firefox:3.7-share
 ```
 
 用遠端桌面連線到 `<主機 IP>:13389`，帳號密碼同為 `bigred`。
@@ -73,11 +73,11 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 ### 3. Web 終端機
 
-在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`）。每個分頁都是獨立的終端機，關掉即清除。終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
+在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`，映像檔已設定連 tkadm 時使用它的 22100 埠）。每個分頁都是獨立的終端機，關掉即清除。終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
 
 在終端機裡貼上請按 `Ctrl+Shift+V` 或 `Shift+Insert`（Mac 上是 `Control+Shift+V`）：`Ctrl+V` 會被當成控制字元送進終端機。
 
-只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免以別人的身分操作。
+只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免以別人的身分操作；`localhost:2210` 則會先詢問要用 SSH 目標上的哪個帳號登入。
 
 ![localhost:2200 終端機](docs/images/04-terminal.png)
 
@@ -127,7 +127,7 @@ bob:Bob-pw
 
 - 帳號規則：小寫英文字母或 `_` 開頭，可用小寫英數字、`_`、`-`，最長 32 字元，不可為 `root`、`xrdp`、`webterm`；密碼不可空白，可以包含冒號。不符規則時 pod 會啟動失敗，原因寫在 `kubectl logs` 裡。
 - 修改 `users.txt` 後再 `kubectl apply -k manifests/multi-user` 即可：Secret 名稱帶內容雜湊（`firefox-rdp-users-<雜湊>`），名單有變就會自動重建 pod。
-- 每個帳號各有自己的桌面與家目錄；設定多個帳號時，`localhost:2200` 會先要求登入。
+- 每個帳號各有自己的桌面與家目錄；設定多個帳號時，`localhost:2200` 會先要求登入，`localhost:2210` 會先詢問 SSH 目標上的帳號。
 - 已用快速開始安裝過也沒關係，直接 apply 即會改用新的名單；之後不要再執行 `install.sh`，否則會換回只有 bigred/bigred。
 - 要換映像檔（例如無法上網的叢集改用私有 registry，或改用不含分享功能的 `:3.2`），在 `manifests/multi-user/kustomization.yaml` 的 `images:` 設定 `newName`／`newTag`。
 - `users.txt` 含明文密碼，請勿提交到公開的 repo；可改用 SOPS、Sealed Secrets 等工具管理。
@@ -135,17 +135,18 @@ bob:Bob-pw
 
 ## 版本比較
 
-| | v3.2 | v3.4-share | v3.5-share | v3.6-share |
-| --- | --- | --- | --- | --- |
-| 映像檔 | `ghcr.io/braveantony/rdp-firefox:3.2` | `ghcr.io/braveantony/rdp-firefox:3.4-share` | `ghcr.io/braveantony/rdp-firefox:3.5-share` | `ghcr.io/braveantony/rdp-firefox:3.6-share` |
-| 同一帳號多人同時登入、各自獨立桌面 | ✅ | ✅ | ✅ | ✅ |
-| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ | ✅ |
-| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ | ✅ | ✅ |
-| 多個帳號（Secret 帳號檔案） | — | — | ✅ | ✅ |
-| `curl \| bash` 安裝、Kustomize 部署 | — | — | ✅ | ✅ |
-| 桌面內直接輸入中文（新酷音） | — | — | — | ✅ |
-| 映像檔大小 | 約 790 MB | 約 1.04 GB | 約 1.04 GB | 約 1.08 GB |
-| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share) | branch [`release/3.5-share`](../../tree/release/3.5-share) | branch [`release/3.6-share`](../../tree/release/3.6-share)（= `main`） |
+| | v3.2 | v3.4-share | v3.5-share | v3.6-share | v3.7-share |
+| --- | --- | --- | --- | --- | --- |
+| 映像檔 | `ghcr.io/braveantony/rdp-firefox:3.2` | `ghcr.io/braveantony/rdp-firefox:3.4-share` | `ghcr.io/braveantony/rdp-firefox:3.5-share` | `ghcr.io/braveantony/rdp-firefox:3.6-share` | `ghcr.io/braveantony/rdp-firefox:3.7-share` |
+| 同一帳號多人同時登入、各自獨立桌面 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ | ✅ | ✅ | ✅ |
+| 多個帳號（Secret 帳號檔案） | — | — | ✅ | ✅ | ✅ |
+| `curl \| bash` 安裝、Kustomize 部署 | — | — | ✅ | ✅ | ✅ |
+| 桌面內直接輸入中文（新酷音） | — | — | — | ✅ | ✅ |
+| 2210 免設定直連 tkadm（22100 埠）、多帳號時詢問 SSH 帳號 | — | — | — | — | ✅ |
+| 映像檔大小 | 約 790 MB | 約 1.04 GB | 約 1.04 GB | 約 1.08 GB | 約 1.08 GB |
+| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share) | branch [`release/3.5-share`](../../tree/release/3.5-share) | branch [`release/3.6-share`](../../tree/release/3.6-share) | branch [`release/3.7-share`](../../tree/release/3.7-share)（= `main`） |
 
 `images/rdp-firefox/Dockerfile` 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `-share` 版；`SESSION_SHARE=0`（預設）建出不含分享功能的版本，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
 
@@ -163,7 +164,7 @@ bob:Bob-pw
 | `RDP_USER` | `bigred` | 沒有帳號檔案時的登入帳號（UID 1000） |
 | `RDP_PASSWORD` | — | 沒有帳號檔案時的登入密碼（此時必填） |
 | `MAX_SESSIONS` | `4` | 同時桌面數上限；加入別人桌面的連線不佔名額 |
-| `SSH_TARGET` | `tkadm.taroko` | `localhost:2210` 終端機的 SSH 目標 |
+| `SSH_TARGET` | `tkadm.taroko` | `localhost:2210` 終端機的 SSH 目標。連 `tkadm.taroko` 時自動使用 22100 埠（`/etc/ssh/ssh_config.d/tkadm.conf`）；其他主機要指定埠號時寫成 `ssh://<主機>:<埠>` |
 
 ## 檔案
 

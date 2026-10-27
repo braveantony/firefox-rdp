@@ -1,6 +1,6 @@
 # Firefox 遠端桌面使用手冊
 
-適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.6-share`（`:3.5-share` 沒有桌面內的中文輸入法，中文只能貼上；`:3.4-share` 另外只有單一帳號）。安裝方式請見 [README](../README.md#快速開始)。
+適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.7-share`（`:3.6-share` 的 `localhost:2210` 要另外設定 22100 埠，且多帳號時無法登入；`:3.5-share` 另外沒有桌面內的中文輸入法，中文只能貼上；`:3.4-share` 另外只有單一帳號）。安裝方式請見 [README](../README.md#快速開始)。
 
 用 Windows 內建的「遠端桌面連線」登入後，畫面上只有一個全螢幕的 Firefox。多人可以同時連線，各自有獨立的桌面；需要時也可以把自己的桌面分享給別人看或一起操作。
 
@@ -42,7 +42,7 @@
 | 網址 | 內容 |
 | --- | --- |
 | `http://localhost:2200` | bash 終端機。只有一個帳號時直接以該帳號進入；有多個帳號時先出現 `login:`，輸入自己的帳號密碼 |
-| `http://localhost:2210` | 直接 SSH 到 `tkadm.taroko`（以 `myssh` 連線） |
+| `http://localhost:2210` | 直接 SSH 到 `tkadm.taroko`（22100 埠，以 `myssh` 連線）。只有一個帳號時以該帳號登入；有多個帳號時先問「tkadm.taroko 的帳號:」，輸入你在 tkadm 上的帳號 |
 
 - 每開一個分頁就是一個獨立的終端機，有自己的暫存家目錄，關掉分頁就刪除。
 - 終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
@@ -107,3 +107,5 @@
 > 3.5-share 的多帳號功能已於 2026-10-25 實測：兩個帳號（其中一組密碼含冒號）在 xrdp 登入畫面各自登入、取得獨立桌面，錯誤密碼與名單外帳號被拒，跨帳號以 PIN 加入分享，以及多帳號時 `localhost:2200` 先要求登入。
 
 > 3.6-share 已於 2026-10-27 在 tk8s 實測：以 FreeRDP 及 macOS 的 Windows App 連線，在 Firefox 網址列、`localhost:2200` 與 `localhost:2210` 終端機以新酷音輸入中文，左 `Shift` 與 `Ctrl+Space` 切換中英、按住 `Shift` 打大寫不會切換，終端機以 `Ctrl+Shift+V`、`Shift+Insert` 貼上中文。
+
+> 3.7-share 已於 2026-10-27 在 tk8s 實測：不設定 `SSH_TARGET` 時 `localhost:2210` 直接連到 tkadm 的 22100 埠並執行 `kubectl get nodes`；多帳號（alice、bigred）時以 alice 登入，`localhost:2210` 先詢問帳號，`-oProxyCommand=id` 等不合格式的輸入被拒，輸入 `bigred` 後登入 tkadm。

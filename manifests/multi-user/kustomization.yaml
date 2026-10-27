@@ -13,4 +13,4 @@ secretGenerator:
 # Pin or change the image tag here if needed:
 # images:
 # - name: ghcr.io/braveantony/rdp-firefox
-#   newTag: 3.6-share
+#   newTag: 3.7-share
