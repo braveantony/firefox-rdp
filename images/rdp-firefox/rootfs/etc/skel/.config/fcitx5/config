@@ -1,0 +1,18 @@
+[Hotkey]
+# Off by default; Ctrl+Space or left Shift toggles between English and 注音
+ActivateKeys=
+DeactivateKeys=
+
+[Hotkey/TriggerKeys]
+0=Control+space
+1=Shift_L
+
+[Hotkey/AltTriggerKeys]
+
+[Hotkey/EnumerateGroupForwardKeys]
+
+[Hotkey/EnumerateGroupBackwardKeys]
+
+[Behavior]
+ShareInputState=All
+ShowInputMethodInformation=True

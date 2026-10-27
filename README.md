@@ -10,8 +10,7 @@
   - 免裝 MetalLB 或 kube-vip，也無需對外暴露任何服務
 - **零安裝、即連即用**：Windows 內建遠端桌面一鍵連線，免裝任何用戶端或外掛，登入即是全螢幕 Firefox
 - **多人並行、彼此隔離**：多個帳號、甚至同一帳號都能多人同時登入，每條連線各自擁有專屬的桌面、瀏覽器、下載目錄與終端機，互不干擾
-- **一行指令完成部署**：`curl | bash` 即裝即用；帳號清單收進 Secret，以 Kustomize 宣告式管理，改名單就自動滾動更新
-- **中文輸入無縫接軌**：沿用 Windows 本機輸入法，透過剪貼簿直接貼入 Firefox
+- **中文輸入無縫接軌**：桌面內建新酷音（注音），按左 `Shift` 即可切換中英；也能從本機剪貼簿直接貼上
 - **即時協作、權限分明**（`-share` 版）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
 
 ## 先決條件
@@ -47,7 +46,7 @@ curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/instal
 ```bash
 podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
   -e RDP_USER=bigred -e RDP_PASSWORD=bigred \
-  ghcr.io/braveantony/rdp-firefox:3.5-share
+  ghcr.io/braveantony/rdp-firefox:3.6-share
 ```
 
 用遠端桌面連線到 `<主機 IP>:13389`，帳號密碼同為 `bigred`。
@@ -62,7 +61,9 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 ### 2. 使用 Firefox
 
-登入後畫面上只有全螢幕的 Firefox。關掉它會在 1 秒內自動重開；解析度跟著遠端桌面視窗大小。中文請在 Windows 打好後複製，再到 Firefox 按 `Ctrl+V`。下載檔案時會詢問儲存位置。
+登入後畫面上只有全螢幕的 Firefox。關掉它會在 1 秒內自動重開；解析度跟著遠端桌面視窗大小。下載檔案時會詢問儲存位置。
+
+輸入中文：本機輸入法保持英文，在遠端桌面裡單獨按一下左 `Shift`（或 `Ctrl+Space`）切換到注音（新酷音），再按一次切回英文。也可以在本機打好後複製，再到 Firefox 按 `Ctrl+V` 貼上（Mac 用 `Cmd+V`）。
 
 在網址列輸入 `http://<service>.<namespace>`（非 80 埠時加 `:<port>`）即可開啟叢集內的 Web 服務，不需要 NodePort、LoadBalancer 或 Ingress。
 
@@ -73,6 +74,8 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 ### 3. Web 終端機
 
 在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則直接 SSH 到 `SSH_TARGET`（預設 `tkadm.taroko`）。每個分頁都是獨立的終端機，關掉即清除。終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
+
+在終端機裡貼上請按 `Ctrl+Shift+V` 或 `Shift+Insert`（Mac 上是 `Control+Shift+V`）：`Ctrl+V` 會被當成控制字元送進終端機。
 
 只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免以別人的身分操作。
 
@@ -98,6 +101,8 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 4. 加入後就看到對方的畫面：用唯讀 PIN 時所有輸入都無效，用操作 PIN 時可以一起操作（滑鼠鍵盤與對方共用）。分享不限帳號：任何人只要拿到 PIN 都能加入。
 
    ![加入後看到對方的畫面](docs/images/07-joined-view.png)
+
+加入後的畫面大小固定跟著分享者，視窗無法放大到全螢幕。需要時在遠端桌面連線的標題列按右鍵，勾選「智慧型調整大小」（Smart sizing），畫面就會跟著視窗縮放。
 
 > 不要在 username 填 `join10\bigred` 之類的名稱：Session 仍是 `Xorg` 時會被當成帳號而登入失敗。
 
@@ -130,16 +135,17 @@ bob:Bob-pw
 
 ## 版本比較
 
-| | v3.2 | v3.4-share | v3.5-share |
-| --- | --- | --- | --- |
-| 映像檔 | `ghcr.io/braveantony/rdp-firefox:3.2` | `ghcr.io/braveantony/rdp-firefox:3.4-share` | `ghcr.io/braveantony/rdp-firefox:3.5-share` |
-| 同一帳號多人同時登入、各自獨立桌面 | ✅ | ✅ | ✅ |
-| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ |
-| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ | ✅ |
-| 多個帳號（Secret 帳號檔案） | — | — | ✅ |
-| `curl \| bash` 安裝、Kustomize 部署 | — | — | ✅ |
-| 映像檔大小 | 約 790 MB | 約 1.04 GB | 約 1.04 GB |
-| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share) | branch [`release/3.5-share`](../../tree/release/3.5-share)（= `main`） |
+| | v3.2 | v3.4-share | v3.5-share | v3.6-share |
+| --- | --- | --- | --- | --- |
+| 映像檔 | `ghcr.io/braveantony/rdp-firefox:3.2` | `ghcr.io/braveantony/rdp-firefox:3.4-share` | `ghcr.io/braveantony/rdp-firefox:3.5-share` | `ghcr.io/braveantony/rdp-firefox:3.6-share` |
+| 同一帳號多人同時登入、各自獨立桌面 | ✅ | ✅ | ✅ | ✅ |
+| localhost:2200／2210 Web 終端機 | ✅ | ✅ | ✅ | ✅ |
+| 分享自己的桌面（操作 PIN／唯讀 PIN） | — | ✅ | ✅ | ✅ |
+| 多個帳號（Secret 帳號檔案） | — | — | ✅ | ✅ |
+| `curl \| bash` 安裝、Kustomize 部署 | — | — | ✅ | ✅ |
+| 桌面內直接輸入中文（新酷音） | — | — | — | ✅ |
+| 映像檔大小 | 約 790 MB | 約 1.04 GB | 約 1.04 GB | 約 1.08 GB |
+| 原始碼 | branch [`release/3.2`](../../tree/release/3.2) | branch [`release/3.4-share`](../../tree/release/3.4-share) | branch [`release/3.5-share`](../../tree/release/3.5-share) | branch [`release/3.6-share`](../../tree/release/3.6-share)（= `main`） |
 
 `images/rdp-firefox/Dockerfile` 用建置參數 `SESSION_SHARE` 區分是否加入分享功能：`SESSION_SHARE=1` 建出 `-share` 版；`SESSION_SHARE=0`（預設）建出不含分享功能的版本，沒有另外發布映像檔。各版本的差異說明見 [Releases](../../releases)。
 

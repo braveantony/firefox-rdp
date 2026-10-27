@@ -6,6 +6,9 @@
 set -u
 export LANG=zh_TW.UTF-8 LC_ALL=zh_TW.UTF-8 TZ=Asia/Taipei
 export NO_AT_BRIDGE=1 GDK_BACKEND=x11 MOZ_ENABLE_WAYLAND=0
+# Chinese input happens in the session (fcitx5 + chewing): xrdp drops the
+# Unicode characters a client-side input method sends
+export GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx
 
 # sesman sets DISPLAY=:N.0; the socket is /tmp/.X11-unix/XN
 dnum=${DISPLAY#*:}
@@ -43,6 +46,8 @@ if [ -f /opt/desktop/session-share.sh ]; then
 fi
 
 openbox &
+# Started before Firefox so GTK finds it; Ctrl+Space or left Shift toggles 注音
+fcitx5 >/dev/null 2>&1 &
 
 if [ -n "${SHARE_INFO:-}" ]; then
   (sleep 2; /opt/desktop/share-info.sh) &
