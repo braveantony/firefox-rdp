@@ -238,9 +238,9 @@
 <text x="540" y="899" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="26" fill="#20334b">③ x0vncserver × N  127.0.0.1:59xx</text>
 <text x="540" y="943" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="25" fill="#435b70">把桌面分享給持有 PIN 的人</text>
 <rect x="1140" y="800" width="640" height="300" fill="#eef8f4" stroke="#ced9e5"/>
-<text x="1680" y="823" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="18" fill="#607586">process</text>
+<text x="1680" y="823" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="18" fill="#607586">session</text>
 <text x="1162" y="850" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="30" fill="#20334b">② Xorg session × N</text>
-<text x="1162" y="889" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="25" fill="#435b70">每條連線一個獨立桌面</text>
+<text x="1162" y="889" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="25" fill="#435b70">每次 Xorg 登入一個獨立桌面</text>
 <text x="1162" y="919" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="22" fill="#596e85">openbox · fcitx5 新酷音</text>
 <rect x="1170" y="960" width="580" height="120" fill="#fff7ed" stroke="#dba46c"/>
 <rect x="1184" y="972" width="552" height="28" fill="#ffffff" stroke="#e1c9af"/>
@@ -302,5 +302,5 @@
 <polyline points="1547,1458 1540,1470" fill="none" stroke="#298b88" stroke-width="3"/>
 <text x="1565" y="1395" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="27" fill="#298b88">SSH</text>
 <text x="440" y="1660" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="27" fill="#596e85">粗藍：Firefox 桌面主路徑　 綠：HTTP／SSH　 紫：PIN 分享　 金：帳號</text>
-<text x="440" y="1705" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="27" fill="#596e85">虛線框 = container，內部方塊 = process</text>
+<text x="440" y="1705" font-family="WenQuanYi Zen Hei, Noto Sans CJK TC, sans-serif" font-size="27" fill="#596e85">虛線框 = container，內部方塊 = process／session</text>
 </svg>

@@ -1,15 +1,15 @@
 # rdp-firefox
 
-用 Windows 遠端桌面（RDP）登入，就進入 Kubernetes 叢集：全螢幕 Firefox 與 Web 終端機一應俱全。支援多人同時使用：每人各有獨立桌面，也能分享給別人觀看或共同操作。
+用 Windows 遠端桌面（RDP）登入後，就能用全螢幕 Firefox 與 Web 終端機存取 Kubernetes 叢集內的服務。支援多人同時使用：每人各有獨立桌面，也能分享給別人觀看或共同操作。
 
 ## 簡述
 
-- **叢集的入口，Web 與 CLI 兼備**：一登入就身處 Kubernetes 叢集之中
-  - **Web**：Firefox 以 `http://<service>.<namespace>`（Service 名稱．所在的 namespace，例如 `http://grafana.monitoring`）直達叢集內的 Web 應用
+- **叢集的入口，Web 與 CLI 兼備**：登入後的桌面就在 Kubernetes 叢集裡，直接存取叢集內的服務
+  - **Web**：Firefox 以 `http://<service>.<namespace>`（Service 名稱加上所在的 namespace，以半形句點 `.` 分隔，例如 `http://grafana.monitoring`）直達叢集內的 Web 應用
   - **CLI**：`localhost:2210` 以 SSH 連到叢集內的管理 Pod（tkadm）操作 Kubernetes，kubeconfig 不必離開叢集
   - 只需開放一個 NodePort（30389），叢集內的 Web 服務不必另外對外開放，也不用裝 MetalLB 或 kube-vip
-- **零安裝、即連即用**：Windows 內建遠端桌面一鍵連線，免裝任何用戶端或外掛，登入即是全螢幕 Firefox
-- **多人並行、彼此隔離**：多個帳號、甚至同一帳號都能多人同時登入，每條連線都有自己的桌面、瀏覽器與下載目錄，每個終端機分頁也各自獨立，互不干擾
+- **零安裝、即連即用**：Windows 內建遠端桌面一鍵連線，免裝任何用戶端或外掛，登入後即可使用全螢幕 Firefox
+- **多人並行、彼此隔離**：多個帳號、甚至同一帳號都能多人同時登入，每次登入都有自己的桌面、瀏覽器與下載目錄，每個終端機分頁也各有獨立的 shell，互不干擾
 - **中文輸入無縫接軌**：桌面內建新酷音（注音），按左 `Shift` 即可切換中英；也能從本機剪貼簿直接貼上
 - **即時協作、權限分明**（`-share` 版）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
 
@@ -17,10 +17,10 @@
 
 ![rdp-firefox 系統運作架構](docs/architecture/rdp-firefox-architecture.png)
 
-用戶端以 RDP 連到節點的 NodePort `30389`（Kubernetes 在每個節點上開放的固定埠號），經 Service `firefox-rdp` 轉到 Pod 的 3389 埠。Pod 只有一個 container（容器），裡面有這些 process（執行中的程式）：
+用戶端以 RDP 連到節點的 NodePort `30389`（Kubernetes 在每個節點上開放的固定埠號），經 Service `firefox-rdp` 轉到 Pod 的 3389 埠。Pod 只有一個 container（容器），裡面有這些 process（執行中的程式）與 session（桌面工作階段）：
 
-- xrdp／xrdp-sesman：接收 RDP 連線、顯示登入畫面、驗證帳號，並替每條連線開一個桌面
-- Xorg session：每條連線各一個桌面，跑全螢幕 Firefox；`-share` 版的每個桌面另有一個 x0vncserver，提供 PIN 分享
+- xrdp／xrdp-sesman：接收 RDP 連線、顯示登入畫面、驗證帳號，並替每次 Xorg 登入開一個桌面
+- Xorg session：每次 Xorg 登入各一個桌面（分享連線則加入既有桌面），執行全螢幕 Firefox；`-share` 版的每個桌面另有一個 x0vncserver，提供 PIN 分享
 - 兩個 ttyd（把終端機做成網頁的程式）：`:2200` bash，`:2210` SSH 到 tkadm；只監聽 loopback（127.0.0.1，只有 Pod 裡面連得到）
 
 詳細說明見 [docs/architecture.md](docs/architecture.md)。
@@ -45,6 +45,8 @@
 
 ### Kubernetes
 
+在已安裝 kubectl、curl、bash，且連得到目標叢集的電腦上執行（可先用 `kubectl config current-context` 確認目前選用的是哪個叢集）：
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh | bash
 ```
@@ -67,7 +69,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 用遠端桌面連線到 `<主機 IP>:13389`（執行 podman 的那台機器；在同一台機器上可用 `localhost:13389`），帳號密碼同為 `bigred`。`--shm-size 1g` 用來加大共用記憶體，避免 Firefox 分頁當掉。
 
-單機沒有叢集，連不到預設的 tkadm；要用 `localhost:2210` 時，請加上 `-e SSH_TARGET=<主機>` 指定要 SSH 的主機。
+單機沒有叢集，連不到預設的 tkadm。要用 `localhost:2210` 時，在上面的 `podman run` 指令中、映像檔名稱之前加上 `-e SSH_TARGET=<主機>`；container 已經建立的話，要先刪除（`podman rm -f firefox-rdp`）再重新建立。
 
 ## 怎麼用
 
@@ -83,19 +85,19 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 
 輸入中文：本機輸入法保持英文，在遠端桌面裡單獨按一下左 `Shift`（或 `Ctrl+Space`）切換到注音（新酷音），再按一次切回英文。也可以在本機打好後複製，再到 Firefox 按 `Ctrl+V` 貼上（Mac 用 `Cmd+V`）。
 
-在網址列輸入 `http://<service>.<namespace>`（Service 的 port 不是 80 時加 `:<port>`）即可開啟叢集內的 Web 服務，不需要 NodePort、LoadBalancer 或 Ingress。
+在網址列輸入 `http://<service>.<namespace>` 即可開啟叢集內的 Web 服務，不必另外把該服務開放到叢集外。服務的埠號不是 80 時，在網址後加上 `:<埠號>`，例如 `http://grafana.monitoring:3000`；埠號就是 Service 的 port，可用 `kubectl get svc -n <namespace>` 查看。
 
 ![全螢幕的 Firefox](docs/images/03-firefox.png)
 
-> 每條連線都是獨立的新桌面：斷線後無法接回，原本的分頁與下載的檔案會在 2 分鐘後清除。
+> 每次以 Xorg 登入都是獨立的新桌面：斷線後無法接回，原本的分頁與下載的檔案會在 2 分鐘後清除。
 
 ### 3. Web 終端機
 
-在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則以 SSH 連到 `SSH_TARGET`（預設 `tkadm.taroko`；映像檔已預先設定好，連 tkadm 時會自動使用 22100 埠）。每個分頁都是獨立的終端機，關掉即清除。終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
+在 Firefox 網址列輸入 `localhost:2200` 就是 bash 終端機，`localhost:2210` 則以 SSH 連到 `SSH_TARGET`（預設 `tkadm.taroko`；映像檔已預先設定好，連 tkadm 時會自動使用 22100 埠）。每個分頁都有獨立的 shell，關掉分頁就會結束；除了多帳號模式的 `localhost:2200`（使用該帳號的家目錄，檔案會保留）之外，分頁裡的家目錄都是暫時的，關掉分頁就刪除。終端機只能在遠端桌面裡的 Firefox 開啟，從你自己電腦的瀏覽器連不到。
 
 在終端機裡貼上請按 `Ctrl+Shift+V` 或 `Shift+Insert`（Mac 上是 `Control+Shift+V`），因為 `Ctrl+V` 會被當成控制字元送進終端機。
 
-只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免以別人的身分操作。`localhost:2210` 在只設定一個帳號時，以同名帳號 SSH 登入（需輸入 SSH 目標上的密碼）；設定多個帳號時，會先詢問要用 SSH 目標上的哪個帳號。
+只設定一個帳號時，`localhost:2200` 直接以該帳號開啟 bash；設定多個帳號時，會先出現 `login:` 提示，輸入自己的帳號密碼後才進入 bash，避免不小心以別人的身分操作；同一帳號開的多個分頁共用該帳號的家目錄。`localhost:2210` 在只設定一個帳號時，以同名帳號 SSH 登入（需輸入 SSH 目標上的密碼）；設定多個帳號時，會先詢問要用 SSH 目標上的哪個帳號。
 
 ![localhost:2200 終端機](docs/images/04-terminal.png)
 
@@ -131,7 +133,7 @@ podman run -d --name firefox-rdp -p 13389:3389 --shm-size 1g \
 ```bash
 git clone https://github.com/braveantony/rdp-firefox.git
 cd rdp-firefox
-vi manifests/multi-user/users.txt
+vi manifests/multi-user/users.txt   # 用你熟悉的文字編輯器修改帳號清單，這裡以 vi 為例
 kubectl apply -k manifests/multi-user
 kubectl -n web-workspace rollout status deploy/firefox-rdp   # 等待 Pod 啟動完成（第一次要下載約 1 GB）
 ```
