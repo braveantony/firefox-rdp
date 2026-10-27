@@ -24,7 +24,7 @@ spec:
                 operator: DoesNotExist
       containers:
       - name: desktop
-        image: ghcr.io/braveantony/rdp-firefox:3.5-share
+        image: ghcr.io/braveantony/rdp-firefox:3.6-share
         imagePullPolicy: IfNotPresent
         # Runs as root: xrdp-sesman needs PAM and setuid to the login accounts.
         # Xorg, openbox and Firefox run as each account; the xrdp listener drops to user xrdp.
