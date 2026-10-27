@@ -104,9 +104,9 @@ text(48,373,'連入即是 Firefox 桌面',26,'#3375b9')
 box(470,220,420,110,'叢集節點（node）',['NodePort :30389'])
 box(520,410,450,100,'Service：firefox-rdp',['30389 → 3389'])
 box(1240,410,540,100,'Secret',['/etc/firefox-rdp/users'],'#fff7e9')
-process_box(520,610,460,'① xrdp / xrdp-sesman :3389',
-            '驗證帳號、開桌面或轉接分享','#edf5ff',27)
-process_box(520,840,460,'③ x0vncserver 127.0.0.1:59xx',
+process_box(520,610,460,'① xrdp :3389／xrdp-sesman',
+            '驗證帳號、開新桌面或轉給分享','#edf5ff',27)
+process_box(520,840,460,'③ x0vncserver × N  127.0.0.1:59xx',
             '把桌面分享給持有 PIN 的人','#f5effb',26)
 # A session contains its browser and desktop helper processes.
 rect(1140,800,640,300,'#eef8f4')
