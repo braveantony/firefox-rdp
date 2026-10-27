@@ -13,6 +13,18 @@
 - **中文輸入無縫接軌**：桌面內建新酷音（注音），按左 `Shift` 即可切換中英；也能從本機剪貼簿直接貼上
 - **即時協作、權限分明**（`-share` 版）：一組 PIN 即可邀請他人加入你的桌面，唯讀觀摩或共同操作由你決定
 
+## 架構
+
+![rdp-firefox 系統運作架構](docs/architecture/rdp-firefox-architecture.png)
+
+用戶端以 RDP 連到節點的 NodePort `30389`，經 Service `firefox-rdp` 轉到 Pod 的 3389 埠。Pod 只有一個 container，裡面有這些 process：
+- xrdp：驗證帳號；
+- Xorg session：每條連線各一個，跑全螢幕 Firefox；
+- x0vncserver：用 PIN 分享桌面；
+- 兩個只監聽 loopback 的 ttyd 網頁終端機：`:2200` bash，`:2210` SSH 到 tkadm。
+
+詳細說明見 [docs/architecture.md](docs/architecture.md)。
+
 ## 先決條件
 
 ### Kubernetes 叢集
@@ -152,6 +164,7 @@ bob:Bob-pw
 
 ## 文件
 
+- [architecture.md](docs/architecture.md)：系統運作架構（連線路徑、Pod 內各 process 的職責、安全邊界）
 - [user-guide.md](docs/user-guide.md)：使用手冊（連線登入、Firefox 與中文、終端機、多人使用、分享與加入桌面、常見問題）
 - [build-image-v3.4.md](docs/build-image-v3.4.md)：從零建置 `:3.4` 與 `:3.4-share`，並部署到 Kubernetes（tk8s）的完整步驟
 - [build-image.md](docs/build-image.md)：v3.2（只有多人獨立 session）的建置步驟
@@ -177,7 +190,7 @@ bob:Bob-pw
 | `install.sh` | 快速開始的 `curl \| bash` 安裝腳本（帳號 bigred/bigred） |
 | `manifests/base/` | Kustomize base：Namespace、Deployment、NodePort Service（30389） |
 | `manifests/multi-user/` | 多帳號 overlay：`users.txt` 帳號清單產生 Secret |
-| `docs/` | 使用手冊、建置文件與 README 截圖（`docs/images/`） |
+| `docs/` | 架構說明、使用手冊、建置文件、架構圖（`docs/architecture/`）與 README 截圖（`docs/images/`） |
 | `test/e2e/` | 在臨時 kind 叢集上的端到端驗證腳本 |
 
 ## 授權
