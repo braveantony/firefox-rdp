@@ -200,6 +200,7 @@ bob:Bob-pw
 | `manifests/multi-user/` | 多帳號 overlay（疊加在 base 上的修改）：由 `users.txt` 帳號清單產生 Secret |
 | `docs/` | 架構說明、使用手冊、建置文件、架構圖（`docs/architecture/`）與 README 截圖（`docs/images/`） |
 | `test/e2e/` | 在臨時 kind 叢集（用容器模擬的測試用 Kubernetes 叢集）上執行的端到端驗證腳本 |
+| `test/architecture/` | 對已部署的叢集核對[架構文件](docs/architecture.md)說法的驗證腳本 |
 
 ## 授權
 
