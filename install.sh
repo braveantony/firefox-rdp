@@ -4,7 +4,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh | bash
 #
 # For several accounts or your own passwords, use the kustomize overlay in
-# manifests/multi-user instead (see README).
+# manifests/multi-user instead (see docs/install.md).
 #
 # Optional, mainly for testing:
 #   RDP_FIREFOX_REF    branch or tag of github.com/braveantony/rdp-firefox to deploy (default: main)
