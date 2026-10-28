@@ -1,6 +1,6 @@
 # Firefox 遠端桌面使用手冊
 
-適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.7-share`（`:3.6-share` 的 `localhost:2210` 要另外設定 22100 埠，且多帳號時無法登入；`:3.5-share` 另外沒有桌面內的中文輸入法，中文只能貼上；`:3.4-share` 另外只有單一帳號）。安裝方式請見 [README](../README.md#快速開始)。
+適用映像檔：`ghcr.io/braveantony/rdp-firefox:3.7-share`（`:3.6-share` 的 `localhost:2210` 要另外設定 22100 埠，且多帳號時無法登入；`:3.5-share` 另外沒有桌面內的中文輸入法，中文只能貼上；`:3.4-share` 另外只有單一帳號）。安裝方式請見 [install.md](install.md)。
 
 用 Windows 內建的「遠端桌面連線」登入後，畫面上只有一個全螢幕的 Firefox。多人可以同時連線，各自有獨立的桌面；需要時也可以把自己的桌面分享給別人看或一起操作。
 
