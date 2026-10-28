@@ -27,7 +27,15 @@
 
 ## 安裝
 
-部署到 Kubernetes 的步驟（先決條件、快速開始、多個帳號、更換映像檔、升級與移除）見 [docs/install.md](docs/install.md)。
+在已安裝 kubectl、curl、bash，且連得到目標 Kubernetes 叢集的電腦上執行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/braveantony/rdp-firefox/main/install.sh | bash
+```
+
+腳本會部署到 namespace `web-workspace`，完成後印出每個節點的連線位址。用遠端桌面連線到 `<節點 IP>:30389`，帳號 `bigred`、密碼 `bigred`。
+
+先決條件、多個帳號（Kustomize）、更換映像檔、升級與移除，請見 [docs/install.md](docs/install.md)。
 
 ## 怎麼用
 
