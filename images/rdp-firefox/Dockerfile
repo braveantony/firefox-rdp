@@ -1,5 +1,10 @@
 FROM alpine:3.22
 
+# The source label links the ghcr package to the GitHub repo
+LABEL org.opencontainers.image.source="https://github.com/braveantony/rdp-firefox" \
+      org.opencontainers.image.description="Full-screen Firefox over RDP (xrdp) for Kubernetes" \
+      org.opencontainers.image.licenses="MIT"
+
 # xrdp + xorgxrdp: every RDP login gets its own Xorg (xrdpdev driver), no VNC
 RUN apk add --no-cache \
       xrdp xorgxrdp xorg-server xinit \
