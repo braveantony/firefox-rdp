@@ -14,7 +14,7 @@ python3 docs/architecture/render.py /path/to/wqy-zenhei.ttc
 
 PNG 使用 WenQuanYi Zen Hei（文泉驛正黑）字型，檢視時不需要另外安裝字型。SVG 在檢視端需要安裝文泉驛正黑或 Noto Sans CJK TC。
 
-核對來源：`README.md`、`manifests/base/{deployment,service,kustomization}.yaml`、`manifests/multi-user/kustomization.yaml`、`images/rdp-firefox/Dockerfile`、`rootfs/opt/desktop/entrypoint.sh`、`rootfs/etc/xrdp/startwm.sh`、`rootfs/etc/ssh/ssh_config.d/tkadm.conf` 與 `rootfs-share/opt/desktop/session-share.sh`（rootfs 路徑相對於 `images/rdp-firefox`）。
+核對來源：`README.md`、`manifests/base/{deployment,service,kustomization}.yaml`、`manifests/multi-user/kustomization.yaml`、`images/rdp-firefox/Dockerfile`、`rootfs/opt/desktop/entrypoint.sh`、`rootfs/etc/xrdp/startwm.sh`、`rootfs/etc/ssh/ssh_config.d/tkadm.conf` 與 `rootfs-share/opt/desktop/session-share.sh`（rootfs 路徑相對於 `images/rdp-firefox`）。改了圖或文件後，可以用 `test/architecture/verify.sh` 對已部署的叢集核對，見 [../architecture.md 的「驗證」](../architecture.md#驗證)。
 
 ## 圖面說明
 

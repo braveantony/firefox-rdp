@@ -47,3 +47,23 @@ xrdp、xrdp-sesman 或任一個 ttyd 結束時，container 就會停止，由 Ku
 - ttyd（2200、2210）與 VNC（59xx）都只監聽 Pod 內的 loopback。
 - 接收 RDP 連線的 xrdp 以無權限的 `xrdp` 帳號執行；xrdp-sesman 需要驗證帳號、切換成登入者，仍以 root 執行；Xorg、Firefox 以登入者的身分執行。
 - tkadm 的 kubeconfig 留在叢集內，不必流出到用戶端。
+
+## 驗證
+
+`test/architecture/verify.sh` 會對已部署的叢集逐項核對本文件的說法，並標明每項對應本文件的哪一節。結果分三種：PASS（相符）、FAIL（不符）、SKIP（這個環境不適用，例如沒人登入時無法檢查桌面）。有任何 FAIL 時，腳本會以失敗結束。
+
+請在能用 kubectl 連到該叢集、也連得到節點 IP 的電腦上，從 repo 根目錄執行。腳本使用目前的 kubectl context（kubectl 現在指向的叢集），namespace 預設 `web-workspace`：
+
+```sh
+test/architecture/verify.sh                   # 約 10 秒
+test/architecture/verify.sh --login <帳號>     # 另外以 RDP 登入兩次，約 3 分鐘；會詢問密碼
+```
+
+- **預設**：不改動部署。它會讀取設定與狀態，在 Pod 裡開一個 Web 終端機分頁幾秒鐘，再開一個臨時 Pod 從 Pod 外試連 3389、2200、2210，確認只有 3389 連得到。臨時 Pod 跑完就刪除。
+- **`--login`**：需要 podman（類似 Docker 的 container 工具）。腳本會用 `test/e2e/client` 的 FreeRDP（開放原始碼的 RDP 用戶端）登入兩次，核對登入時才啟動的 ②、③，關掉一次測試桌面的 Firefox 確認會自動重開，再斷線確認桌面約 2 分鐘後清除。
+  - 執行期間會占用 2 個 `MAX_SESSIONS` 名額，名額不足時會略過。
+  - 密碼可以事先放在環境變數 `RDP_PASSWORD`，否則會詢問。密碼經標準輸入傳給用戶端，不會出現在指令列。
+  - 預設連第一個節點的 30389，可用 `RDP_HOST=<IP>:<埠>` 改連其他位址。
+  - 截圖存在 `test/architecture/out/`。
+- **`--destructive`**：會停掉一個 ttyd，確認 container 由 Kubernetes 重啟。這會關閉 Pod 裡所有桌面，請在沒人使用時才加。
+- join 分享的 PIN 權限、用 mstsc 實際看到的畫面等無法自動驗證的項目，腳本最後會列出來，需要手動確認。
