@@ -25,7 +25,7 @@
 
 詳細說明見 [docs/architecture.md](docs/architecture.md)。
 
-## 安裝
+## 快速開始
 
 在已安裝 kubectl、curl、bash，且連得到目標 Kubernetes 叢集的電腦上執行：
 
