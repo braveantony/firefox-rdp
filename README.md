@@ -15,15 +15,7 @@
 
 ## 架構
 
-![rdp-firefox 系統運作架構](docs/architecture/rdp-firefox-architecture.png)
-
-用戶端以 RDP 連到節點的 NodePort `30389`（Kubernetes 在每個節點上開放的固定埠號），經 Service `firefox-rdp` 轉到 Pod 的 3389 埠。Pod 只有一個 container（容器），裡面有這些 process（執行中的程式）與 session（桌面工作階段）：
-
-- xrdp／xrdp-sesman：接收 RDP 連線、顯示登入畫面、驗證帳號，並替每次 Xorg 登入開一個桌面
-- Xorg session：每次 Xorg 登入各一個桌面（分享連線則加入既有桌面），執行全螢幕 Firefox；`-share` 版的每個桌面另有一個 x0vncserver，提供 PIN 分享
-- 兩個 ttyd（把終端機做成網頁的程式）：`:2200` bash，`:2210` SSH 到 tkadm；只監聽 loopback（127.0.0.1，只有 Pod 裡面連得到）
-
-詳細說明見 [docs/architecture.md](docs/architecture.md)。
+詳細說明請參考 [docs/architecture.md](docs/architecture.md)。
 
 ## 快速開始
 
